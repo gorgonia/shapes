@@ -123,6 +123,8 @@ func (s Abstract) Format(st fmt.State, r rune) {
 				fmt.Fprintf(st, "%c", rune(vt))
 			case BinOp:
 				fmt.Fprintf(st, "%v", vt)
+			case UnaryOp:
+				fmt.Fprintf(st, "%v", vt)
 			}
 			if i < len(s)-1 {
 				st.Write([]byte(", "))
@@ -138,14 +140,8 @@ func (s Abstract) apply(ss substitutions) substitutable {
 	retVal := make(Abstract, len(s))
 	copy(retVal, s)
 	for i, a := range s {
-		if v, ok := a.(Var); ok {
-			for _, sub := range ss {
-				if v == sub.For {
-					retVal[i] = sub.Sub.(Sizelike)
-					break
-				}
-			}
-		}
+		st := a.(substitutable)
+		retVal[i] = st.apply(ss).(Sizelike)
 	}
 	return retVal
 }
@@ -164,4 +160,30 @@ func (s Abstract) subExprs() (retVal []substitutableExpr) {
 		retVal = append(retVal, s[i].(substitutableExpr))
 	}
 	return retVal
+}
+
+func (s Abstract) resolve() (Expr, error) {
+	for i, v := range s {
+		switch r := v.(type) {
+		case sizeOp:
+			if !r.isValid() {
+				s[i] = v
+				continue
+			}
+			sz, err := r.resolveSize()
+			if err != nil {
+				return nil, errors.Errorf("%dth sizelike of %v is not resolveable to a Size", i, s)
+			}
+			s[i] = sz
+		case Size:
+			s[i] = v
+		default:
+			return nil, errors.Errorf("Sizelike of %T is unhandled by Abstract", v)
+		}
+
+	}
+	if shp, ok := s.ToShape(); ok {
+		return shp, nil
+	}
+	return s, nil
 }

@@ -24,9 +24,7 @@ func (c exprConstraint) apply(ss substitutions) substitutable {
 
 func (c exprConstraint) freevars() varset { return exprtup(c).freevars() }
 
-func (c exprConstraint) Format(f fmt.State, r rune) {
-	fmt.Fprintf(f, "{%v = %v}", c.a, c.b)
-}
+func (c exprConstraint) Format(f fmt.State, r rune) { fmt.Fprintf(f, "{%v = %v}", c.a, c.b) }
 
 type constraints []exprConstraint
 

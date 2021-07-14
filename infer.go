@@ -150,6 +150,12 @@ func alpha(set varset, a Expr) Expr {
 
 func recursiveResolve(a Expr) (Expr, error) {
 	switch at := a.(type) {
+	case Abstract:
+		// even though Abstract implements `resolver`,
+		// due to the recursive nature of recursiveResolve,
+		// this will cause an infinite loop
+		retVal, err := at.resolve()
+		return retVal, err
 	case sizeOp:
 		if !at.isValid() {
 			return nil, errors.Errorf("Expression %v is not a valid Operation", at)

@@ -177,7 +177,7 @@ func Example_add() {
 func Example_ravel() {
 	ravel := Arrow{
 		Var('a'),
-		UnaryOp{Prod, Var('a')},
+		Abstract{UnaryOp{Prod, Var('a')}},
 	}
 	fmt.Printf("Ravel: %v\n", ravel)
 
@@ -190,9 +190,9 @@ func Example_ravel() {
 	fmt.Printf("%v @ %v ↠ %v", ravel, fst, retExpr)
 
 	// Output:
-	// Ravel: a → Π a
+	// Ravel: a → (Π a)
 	// Applying (2, 3, 4) to Ravel:
-	// a → Π a @ (2, 3, 4) ↠ (24)
+	// a → (Π a) @ (2, 3, 4) ↠ (24)
 }
 
 func Example_transpose() {
@@ -480,10 +480,40 @@ func Example_reshape() {
 		},
 	}
 
-	fmt.Printf("%v", expr)
+	fmt.Printf("Reshape: %v\n", expr)
+
+	fst := Shape{2, 3}
+	snd := Shape{3, 2}
+
+	retExpr, err := InferApp(expr, fst)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Applying %v to %v:\n", fst, expr)
+	fmt.Printf("\t%v @ %v ↠ %v\n", expr, fst, retExpr)
+
+	retExpr2, err := InferApp(retExpr, snd)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Applying %v to %v:\n", snd, retExpr)
+	fmt.Printf("\t%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
+
+	bad := Shape{6, 2}
+	_, err = InferApp(retExpr, bad)
+	fmt.Printf("Applying a bad shape %v to %v:\n", bad, retExpr)
+	fmt.Printf("\t%v\n", err)
 
 	// Output:
-	// { a → b → b | (Π a = Π b) }
+	// Reshape: { a → b → b | (Π a = Π b) }
+	// Applying (2, 3) to { a → b → b | (Π a = Π b) }:
+	//	{ a → b → b | (Π a = Π b) } @ (2, 3) ↠ { b → b | (Π (2, 3) = Π b) }
+	// Applying (3, 2) to { b → b | (Π (2, 3) = Π b) }:
+	//	{ b → b | (Π (2, 3) = Π b) } @ (3, 2) ↠ (3, 2)
+	// Applying a bad shape (6, 2) to { b → b | (Π (2, 3) = Π b) }:
+	//	SubjectTo (Π (2, 3) = Π (6, 2)) resolved to false. Cannot continue
+
 }
 
 // The following shape expressions describe a columnwise summing of a matrix.
