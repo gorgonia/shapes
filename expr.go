@@ -46,6 +46,10 @@ func (v Var) subExprs() []substitutableExpr { return nil }
 // Axis represents an axis in doing shape stuff.
 type Axis int
 
+const (
+	AllAxes Axis = -1
+)
+
 func (a Axis) isExpr()                              {}
 func (a Axis) apply(ss substitutions) substitutable { return a }
 func (a Axis) freevars() varset                     { return nil }

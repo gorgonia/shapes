@@ -81,3 +81,24 @@ func toRange(s Slice) Range {
 	}
 	return Range{s.Start(), s.End(), s.Step()}
 }
+
+// sliceSize is a support function for slicing a number
+func sliceSize(sl Slice, sz int) (retVal int, err error) {
+
+	var start, end, step int
+	if start, end, step, err = SliceDetails(sl, sz); err != nil {
+		return
+	}
+
+	if step > 1 {
+		retVal = (end - start) / step
+
+		//fix
+		if retVal <= 0 {
+			retVal = 1
+		}
+	} else {
+		retVal = (end - start)
+	}
+	return
+}

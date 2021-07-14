@@ -28,6 +28,16 @@ func prodInts(a []int) int {
 	return retVal
 }
 
+func sumInts(a []int) (retVal int) {
+	if len(a) == 0 {
+		return
+	}
+	for i := 0; i < len(a); i++ {
+		retVal += a[i]
+	}
+	return
+}
+
 func allEq(a []int, e int) bool {
 	for _, v := range a {
 		if v != e {

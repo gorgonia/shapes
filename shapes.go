@@ -104,13 +104,26 @@ func (s Shape) IsScalarEquiv() bool {
 //		vanilla vector (not a row or a col)
 //		column vector
 //		row vector
-func (s Shape) IsVector() bool { return s.IsColVec() || s.IsRowVec() || (len(s) == 1 && s[0] > 1) }
+func (s Shape) IsVector() bool { return s.IsColVec() || s.IsRowVec() || (len(s) == 1) }
 
 // IsColVec returns true when the access pattern has the shape (x, 1)
 func (s Shape) IsColVec() bool { return len(s) == 2 && (s[1] == 1 && s[0] > 1) }
 
 // IsRowVec returns true when the access pattern has the shape (1, x)
 func (s Shape) IsRowVec() bool { return len(s) == 2 && (s[0] == 1 && s[1] > 1) }
+
+// IsVectorLike returns true when the shape looks like a vector
+// e.g. a number that is surrounded by 1s:
+// 	(1, 1, ... 1, 10, 1, 1... 1)
+func (s Shape) IsVectorLike() bool {
+	var nonOnes int
+	for _, i := range s {
+		if i != 1 {
+			nonOnes++
+		}
+	}
+	return nonOnes == 1 || nonOnes == 0 // if there is only one non-one then it's a vector or a scalarlike.
+}
 
 // IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
 func (s Shape) IsMatrix() bool { return len(s) == 2 }
@@ -135,6 +148,7 @@ func (s Shape) T(axes ...Axis) (newShape Shapelike, err error) {
 	return
 }
 
+// S gives the new shape after a shape has been sliced.
 func (s Shape) S(slices ...Slice) (newShape Shapelike, err error) {
 	opDims := len(s)
 	if len(slices) > opDims {
@@ -149,21 +163,8 @@ func (s Shape) S(slices ...Slice) (newShape Shapelike, err error) {
 		if d <= len(slices)-1 {
 			sl = slices[d]
 		}
-
-		var start, end, step int
-		if start, end, step, err = SliceDetails(sl, size); err != nil {
-			return
-		}
-
-		if step > 0 {
-			retVal[d] = (end - start) / step
-
-			//fix
-			if retVal[d] <= 0 {
-				retVal[d] = 1
-			}
-		} else {
-			retVal[d] = (end - start)
+		if retVal[d], err = sliceSize(sl, size); err != nil {
+			return nil, errors.Wrapf(err, "Unable to slice shape %v. Dim %d caused an error", s, d)
 		}
 
 	}
@@ -184,16 +185,108 @@ func (s Shape) S(slices ...Slice) (newShape Shapelike, err error) {
 		//ReturnInts(retVal)
 		return ScalarShape(), nil
 	}
-
+	newShape = retVal
 	return
 }
 
-func (s Shape) Repeat(axis Axis, repeats ...int) (newShape Shapelike, finalRepeats []int, size int, err error) {
-	panic("not implemented") // TODO: Implement
+// Repeat returns the expected new shape given the repetition parameters
+func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats []int, size int, err error) {
+	var newShape Shape
+	switch {
+	case axis == AllAxes:
+		size = s.TotalSize()
+		newShape = Shape{size}
+		axis = 0
+	case s.IsScalar():
+		size = 1
+		// special case for row vecs
+		if axis == 1 {
+			newShape = Shape{1, 0}
+		} else {
+			// otherwise it will be repeated into a vanilla vector
+			newShape = Shape{0}
+		}
+	case s.IsVector() && !s.IsRowVec() && !s.IsColVec() && axis == 1:
+		size = 1
+		newShape = s.Clone().(Shape)
+		newShape = append(newShape, 1)
+	default:
+		if int(axis) >= len(s) {
+			// error
+			err = errors.Errorf(invalidAxis, axis, s.Dims())
+			return
+		}
+		size = s[axis]
+		newShape = s.Clone().(Shape)
+	}
+
+	// special case to allow generic repeats
+	if len(repeats) == 1 {
+		rep := repeats[0]
+		repeats = make([]int, size)
+		for i := range repeats {
+			repeats[i] = rep
+		}
+	}
+	reps := len(repeats)
+	if reps != size {
+		err = errors.Errorf(broadcastError, size, reps)
+		return
+	}
+
+	newSize := sumInts(repeats)
+	newShape[axis] = newSize
+	finalRepeats = repeats
+
+	retVal = newShape
+	return
 }
 
-func (s Shape) Concat(axis Axis, others ...Shapelike) (newShape Shapelike, err error) {
-	panic("not implemented") // TODO: Implement
+func (s Shape) Concat(axis Axis, ss ...Shapelike) (retVal Shapelike, err error) {
+
+	dims := s.Dims()
+
+	// check that all the concatenates have the same dimensions
+	for _, shp := range ss {
+		if shp.Dims() != dims {
+			err = errors.Errorf(dimMismatch, dims, shp.Dims())
+			return
+		}
+	}
+
+	// special case
+	if axis == AllAxes {
+		axis = 0
+	}
+
+	// nope... no negative indexing here.
+	if axis < 0 {
+		err = errors.Errorf(invalidAxis, axis, len(s))
+		return
+	}
+
+	if int(axis) >= dims {
+		err = errors.Errorf(invalidAxis, axis, len(s))
+		return
+	}
+
+	newShape := s.Clone().(Shape)
+	for _, sl := range ss {
+		shp := sl.(Shape) // will panic if not a shape
+		for d := 0; d < dims; d++ {
+			if d == int(axis) {
+				newShape[d] += shp[d]
+			} else {
+				// validate that the rest of the dimensions match up
+				if newShape[d] != shp[d] {
+					err = errors.Wrapf(errors.Errorf(dimMismatch, newShape[d], shp[d]), "Axis: %d, dimension it failed at: %d", axis, d)
+					return
+				}
+			}
+		}
+	}
+	retVal = newShape
+	return
 }
 
 // Format implements fmt.Formatter, and formats a shape nicely
