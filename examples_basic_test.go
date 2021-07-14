@@ -580,3 +580,22 @@ func Example_trace() {
 	// Output:
 	// Trace: (a, a) → ()
 }
+
+func Example_keepDims() {
+	keepDims1 := MakeArrow(
+		MakeArrow(Var('a'), Var('b')),
+		Var('a'),
+		Var('c'),
+	)
+
+	expr := Compound{keepDims1, SubjectTo{
+		Eq,
+		UnaryOp{Dims, Var('a')},
+		UnaryOp{Dims, Var('c')},
+	}}
+
+	fmt.Printf("KeepDims1: %v", expr)
+	// Output:
+	// KeepDims1: { (a → b) → a → c | (D a = D c) }
+
+}
