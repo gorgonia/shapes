@@ -89,6 +89,7 @@ func Example_matMul() {
 	expr2, err := InferApp(matmul, fst)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
+		return
 	}
 	fmt.Printf("Applying %v to MatMul:\n", fst)
 	fmt.Printf("%v @ %v ↠ %v\n", matmul, fst, expr2)
@@ -249,13 +250,12 @@ func Example_transpose() {
 	// Unconstrained Transpose: a → X[0 1 3 2] → T X[0 1 3 2] a
 	// Transpose: { a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) }
 	// Applying (1, 2, 3, 4) to { a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) }:
-	// 	{ a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) } @ (1, 2, 3, 4) ↠ X[0 1 3 2] → T X[0 1 3 2] (1, 2, 3, 4)
-	// Applying X[0 1 3 2] to X[0 1 3 2] → T X[0 1 3 2] (1, 2, 3, 4):
-	// 	X[0 1 3 2] → T X[0 1 3 2] (1, 2, 3, 4) @ X[0 1 3 2] ↠ (1, 2, 4, 3)
-	// Bad Axes causes error: Failed to solve [{X[0 1 3 2] → T X[0 1 3 2] (1, 2, 3, 4) = X[0 2 1 3] → a}] | a: Unification Fail. X[0 1 3 2] ~ X[0 2 1 3] cannot proceed
+	// 	{ a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) } @ (1, 2, 3, 4) ↠ X[0 1 3 2] → (1, 2, 4, 3)
+	// Applying X[0 1 3 2] to X[0 1 3 2] → (1, 2, 4, 3):
+	// 	X[0 1 3 2] → (1, 2, 4, 3) @ X[0 1 3 2] ↠ (1, 2, 4, 3)
+	// Bad Axes causes error: Failed to solve [{X[0 1 3 2] → (1, 2, 4, 3) = X[0 2 1 3] → a}] | a: Unification Fail. X[0 1 3 2] ~ X[0 2 1 3] cannot proceed
 	// Bad first input causes error: SubjectTo (D X[0 1 3 2] = D (2, 3, 4)) resolved to false. Cannot continue
 	//
-
 }
 
 func Example_index() {

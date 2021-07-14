@@ -377,7 +377,7 @@ func (op UnaryOp) resolveSize() (Size, error) {
 	case Size:
 		switch op.Op {
 		case Const:
-			return 0, errors.Errorf(unaryOpResolveErr, op)
+			return A, nil
 		case Dims:
 			return 0, nil
 		case Prod:

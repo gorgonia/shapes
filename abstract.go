@@ -99,7 +99,58 @@ func (a Abstract) T(axes ...Axis) (newShape Shapelike, err error) {
 }
 
 func (a Abstract) S(slices ...Slice) (newShape Shapelike, err error) {
-	panic("not implemented") // TODO: Implement
+	if shp, ok := a.ToShape(); ok {
+		return shp.S(slices...)
+	}
+
+	opDims := len(a)
+	if len(slices) > opDims {
+		err = errors.Errorf(dimsMismatch, opDims, len(slices))
+		return
+	}
+
+	retVal := a.Clone().(Abstract)
+	for d, size := range a {
+
+		var sl Slice // default is a nil Slice
+		if d <= len(slices)-1 {
+			sl = slices[d]
+		}
+		if sl == nil {
+			retVal[d] = size
+			continue
+		}
+
+		switch s := size.(type) {
+		case Size:
+			var x int
+			if x, err = sliceSize(sl, int(s)); err != nil {
+				return nil, errors.Wrapf(err, "Unable to slice %v. Dim %d caused an error.", a, d)
+			}
+			retVal[d] = Size(x)
+
+		case Var:
+			retVal[d] = sizelikeSliceOf{SliceOf{sl, s}}
+		case BinOp:
+			retVal[d] = sizelikeSliceOf{SliceOf{sl, exprBinOp{s}}}
+		case UnaryOp:
+			retVal[d] = sizelikeSliceOf{SliceOf{sl, s}}
+		default:
+			return nil, errors.Errorf("%dth sizelike %v of %T is unsupported by S(). Perhaps make a pull request?", d, size, size)
+		}
+
+		// attempt to resolve if possible
+		if s, ok := retVal[d].(sizeOp); ok && s.isValid() {
+			if sz, err := s.resolveSize(); err == nil {
+				retVal[d] = sz
+			}
+		}
+
+	}
+
+	// TODO: drop dimensions with size 1
+
+	return retVal, nil
 }
 
 func (a Abstract) Repeat(axis Axis, repeats ...int) (newShape Shapelike, finalRepeats []int, size int, err error) {
@@ -121,10 +172,8 @@ func (s Abstract) Format(st fmt.State, r rune) {
 				fmt.Fprintf(st, "%d", int(vt))
 			case Var:
 				fmt.Fprintf(st, "%c", rune(vt))
-			case BinOp:
-				fmt.Fprintf(st, "%v", vt)
-			case UnaryOp:
-				fmt.Fprintf(st, "%v", vt)
+			default:
+				fmt.Fprintf(st, "%v", v)
 			}
 			if i < len(s)-1 {
 				st.Write([]byte(", "))
@@ -163,27 +212,28 @@ func (s Abstract) subExprs() (retVal []substitutableExpr) {
 }
 
 func (s Abstract) resolve() (Expr, error) {
+	retVal := s.Clone().(Abstract)
 	for i, v := range s {
 		switch r := v.(type) {
 		case sizeOp:
 			if !r.isValid() {
-				s[i] = v
+				retVal[i] = v
 				continue
 			}
 			sz, err := r.resolveSize()
 			if err != nil {
 				return nil, errors.Errorf("%dth sizelike of %v is not resolveable to a Size", i, s)
 			}
-			s[i] = sz
+			retVal[i] = sz
 		case Size:
-			s[i] = v
+			retVal[i] = v
 		default:
 			return nil, errors.Errorf("Sizelike of %T is unhandled by Abstract", v)
 		}
 
 	}
-	if shp, ok := s.ToShape(); ok {
+	if shp, ok := retVal.ToShape(); ok {
 		return shp, nil
 	}
-	return s, nil
+	return retVal, nil
 }

@@ -156,6 +156,16 @@ func recursiveResolve(a Expr) (Expr, error) {
 		// this will cause an infinite loop
 		retVal, err := at.resolve()
 		return retVal, err
+	case Arrow:
+		A, err := recursiveResolve(at.A)
+		if err != nil {
+			return a, nil // if there's an error, don't continue or return errors.
+		}
+		B, err := recursiveResolve(at.B)
+		if err != nil {
+			return a, nil // if there's an error, don't continue or return errors.
+		}
+		return Arrow{A, B}, nil
 	case sizeOp:
 		if !at.isValid() {
 			return nil, errors.Errorf("Expression %v is not a valid Operation", at)
