@@ -573,10 +573,10 @@ func Example_colwiseSumMatrix() {
 func Example_trace() {
 	expr := Arrow{
 		Abstract{Var('a'), Var('a')},
-		Var('a'),
+		Shape{},
 	}
 	fmt.Printf("Trace: %v\n", expr)
 
 	// Output:
-	// Trace: (a, a) → a
+	// Trace: (a, a) → ()
 }
