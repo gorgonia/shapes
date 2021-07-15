@@ -23,7 +23,10 @@ type Expr interface {
 	substitutable
 }
 
-// Var represents a variable
+// Var represents a variable. A variable can represent:
+// 	- a Shape (e.g. a in the expression a → b)
+// 	- a Size (e.g. (a, b))
+//	- a Slice (in Arrow expressions)
 type Var rune
 
 func (v Var) isSizelike()                {}

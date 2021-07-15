@@ -133,11 +133,19 @@ func (s Shape) Dims() int { return len(s) }
 
 func (s Shape) TotalSize() int { return prodInts([]int(s)) }
 
-func (s Shape) DimSize(dim int) (Sizelike, error) {
-	if s.Dims() <= dim {
-		return nil, errors.Errorf("Cannot get Dim %d of %v", dim, s)
+// DimSize returns the dimension wanted.
+func (s Shape) DimSize(d int) (retVal Sizelike, err error) {
+	if (s.IsScalar() && d != 0) || (!s.IsScalar() && d >= len(s)) {
+		err = errors.Errorf(dimMismatch, len(s), d)
+		return
 	}
-	return Size(s[dim]), nil
+
+	switch {
+	case s.IsScalar():
+		return Size(0), nil
+	default:
+		return Size(s[d]), nil
+	}
 }
 
 func (s Shape) T(axes ...Axis) (newShape Shapelike, err error) {
