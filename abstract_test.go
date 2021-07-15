@@ -39,22 +39,22 @@ var absSliceTests = []struct {
 }{
 	{"all vars", Gen(2), nil, Gen(2), false},
 	{"all vars", Gen(2), []Slice{nil, S(1)},
-		Abstract{Var('a'), sizelikeSliceOf{SliceOf{S(1), Var('b')}}}, false},
+		Abstract{Var('a'), sizelikeSliceOf{SliceOf{*S(1), Var('b')}}}, false},
 
 	{"all sizes (vector)", Abstract{Size(2)}, []Slice{S(0)}, ScalarShape(), false},
 	{"all sizes (vector) - bad slice range", Abstract{Size(2)}, []Slice{S(3)}, nil, true},
 
 	{"Mixed sizes and var", Abstract{Var('a'), Size(2)}, []Slice{S(2), S(0, 2)},
-		Abstract{sizelikeSliceOf{SliceOf{S(2), Var('a')}}, Size(2)},
+		Abstract{sizelikeSliceOf{SliceOf{*S(2), Var('a')}}, Size(2)},
 		false,
 	},
 	{"Mixed",
 		Abstract{Var('a'), BinOp{Add, Var('a'), Var('b')}, UnaryOp{Dims, Var('b')}},
 		[]Slice{S(1, 5, 2), S(1, 5), S(1, 5)},
 		Abstract{
-			sizelikeSliceOf{SliceOf{S(1, 5, 2), Var('a')}},
-			sizelikeSliceOf{SliceOf{S(1, 5), exprBinOp{BinOp{Add, Var('a'), Var('b')}}}},
-			sizelikeSliceOf{SliceOf{S(1, 5), UnaryOp{Dims, Var('b')}}},
+			sizelikeSliceOf{SliceOf{*S(1, 5, 2), Var('a')}},
+			sizelikeSliceOf{SliceOf{*S(1, 5), exprBinOp{BinOp{Add, Var('a'), Var('b')}}}},
+			sizelikeSliceOf{SliceOf{*S(1, 5), UnaryOp{Dims, Var('b')}}},
 		},
 		false,
 	},

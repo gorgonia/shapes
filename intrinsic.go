@@ -90,22 +90,66 @@ func (t TransposeOf) resolve() (Expr, error) {
 	panic("Unreachable")
 }
 
+// SliceOf is an intrinsic operation, symbolically representing a slicing operation.
 type SliceOf struct {
-	Slice Slice
+	Slice Slicelike
 	A     Expr
 }
 
-func (s SliceOf) isExpr()                     {}
-func (s SliceOf) Format(st fmt.State, r rune) { fmt.Fprintf(st, "%v%v", s.A, s.Slice) }
+func (s SliceOf) isExpr() {}
+func (s SliceOf) Format(st fmt.State, r rune) {
+	switch s.Slice.(type) {
+	case Slice:
+		fmt.Fprintf(st, "%v%v", s.A, s.Slice)
+	case Var:
+		fmt.Fprintf(st, "%v[%v]", s.A, s.Slice)
+
+	}
+
+}
 func (s SliceOf) apply(ss substitutions) substitutable {
 	return SliceOf{
-		Slice: s.Slice,
+		Slice: s.Slice.apply(ss).(Slicelike),
 		A:     s.A.apply(ss).(Expr),
 	}
 }
 func (s SliceOf) freevars() varset { return s.A.freevars() }
 func (s SliceOf) subExprs() []substitutableExpr {
-	return []substitutableExpr{toRange(s.Slice), s.A.(substitutableExpr)}
+	return []substitutableExpr{s.Slice, s.A.(substitutableExpr)}
+}
+
+func (s SliceOf) resolve() (Expr, error) {
+	switch at := s.A.(type) {
+	case Shapelike:
+		sl, ok := s.Slice.(Slice)
+		if !ok {
+			return s, nil
+		}
+		retVal, err := at.S(sl)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to resolve %v - .S() failed", s)
+		}
+		return retVal.(Expr), nil
+	default:
+		return nil, errors.Errorf("Cannot slice Expression %v of %T", s.A, s.A)
+	}
+}
+
+// isValid makes SliceOf an Operation.
+func (s SliceOf) isValid() bool {
+	_, isVar := s.Slice.(Var)
+	if isVar {
+		return false
+	}
+
+	switch a := s.A.(type) {
+	case Size:
+		return true
+	case Operation:
+		return a.isValid()
+	default:
+		return false
+	}
 }
 
 type ConcatOf struct {
@@ -147,4 +191,17 @@ func (r RepeatOf) apply(ss substitutions) substitutable {
 func (r RepeatOf) freevars() varset { return r.A.freevars() }
 func (r RepeatOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{r.Along, r.A.(substitutableExpr)}
+}
+
+func (r RepeatOf) resolve() (Expr, error) {
+	switch at := r.A.(type) {
+	case Shapelike:
+		retVal, _, _, err := at.Repeat(r.Along, sizesToInts(r.Repeats)...)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to resolve %v. .Repeat() failed", r)
+		}
+		return retVal.(Expr), nil
+	default:
+		return nil, errors.Errorf("Cannot Repeat Expression %v of %T", r.A, r.A)
+	}
 }

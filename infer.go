@@ -71,7 +71,6 @@ func Infer(ce ConstraintsExpr) (Expr, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to solve %v", ce)
 	}
-
 	retVal := ce.e.apply(subs).(Expr)
 	if retVal, err = recursiveResolve(retVal); err != nil {
 		return retVal, err
@@ -166,6 +165,14 @@ func recursiveResolve(a Expr) (Expr, error) {
 			return a, nil // if there's an error, don't continue or return errors.
 		}
 		return Arrow{A, B}, nil
+	case SliceOf:
+		A, err := recursiveResolve(at.A)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to resolve %v in SliceOf", at.A)
+		}
+		s := SliceOf{at.Slice, A}
+		return s.resolve()
+
 	case sizeOp:
 		if !at.isValid() {
 			return nil, errors.Errorf("Expression %v is not a valid Operation", at)

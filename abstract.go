@@ -130,11 +130,11 @@ func (a Abstract) S(slices ...Slice) (newShape Shapelike, err error) {
 			retVal[d] = Size(x)
 
 		case Var:
-			retVal[d] = sizelikeSliceOf{SliceOf{sl, s}}
+			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), s}}
 		case BinOp:
-			retVal[d] = sizelikeSliceOf{SliceOf{sl, exprBinOp{s}}}
+			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), exprBinOp{s}}}
 		case UnaryOp:
-			retVal[d] = sizelikeSliceOf{SliceOf{sl, s}}
+			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), s}}
 		default:
 			return nil, errors.Errorf("%dth sizelike %v of %T is unsupported by S(). Perhaps make a pull request?", d, size, size)
 		}
@@ -222,6 +222,7 @@ func (a Abstract) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepe
 			newSize := BinOp{Mul, sz.(Expr), rep}
 			newShape[axis] = newSize
 
+			// set return values
 			finalRepeats = repeats
 		} else {
 			// cannot check if newShape[axis] == len(repeats)

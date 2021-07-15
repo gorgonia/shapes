@@ -16,27 +16,19 @@ type sizelikeSliceOf struct{ SliceOf }
 
 func (s sizelikeSliceOf) isSizelike() {}
 
-func (s sizelikeSliceOf) isValid() bool {
-	switch a := s.SliceOf.A.(type) {
-	case Size:
-		return true
-	case Operation:
-		return a.isValid()
-	default:
-		return false
-	}
-}
-
 func (s sizelikeSliceOf) apply(ss substitutions) substitutable {
 	so := s.SliceOf.apply(ss).(SliceOf)
 	return sizelikeSliceOf{so}
 }
 
 func (s sizelikeSliceOf) resolveSize() (retVal Size, err error) {
+	if !s.isValid() {
+		return -1, errors.Errorf("Cannot resolveSize - some variables remain")
+	}
 	switch a := s.SliceOf.A.(type) {
 	case Size:
 		var x int
-		if x, err = sliceSize(s.SliceOf.Slice, int(a)); err != nil {
+		if x, err = sliceSize(s.SliceOf.Slice.(Slice), int(a)); err != nil {
 			return -1, errors.Wrapf(err, "Unable to resolve %v into a Size", s)
 		}
 		return Size(x), nil
@@ -46,7 +38,7 @@ func (s sizelikeSliceOf) resolveSize() (retVal Size, err error) {
 			return -1, errors.Wrapf(err, "Unable to resolve %v into a Size", s)
 		}
 
-		if x, err = sliceSize(s.SliceOf.Slice, int(retVal)); err != nil {
+		if x, err = sliceSize(s.SliceOf.Slice.(Slice), int(retVal)); err != nil {
 			return -1, errors.Wrapf(err, "Unable to resolve %v into a Size", s)
 		}
 		return Size(x), nil

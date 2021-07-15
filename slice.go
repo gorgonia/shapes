@@ -51,8 +51,11 @@ func (s Range) End() int { return s.end }
 // Step returns the steps/jumps to make in the slicing range.
 func (s Range) Step() int { return s.step }
 
+// isSlicelike makes Range implement slicelike
+func (s Range) isSlicelike() {}
+
 // S creates a Slice. Internally it uses the Range type provided.
-func S(start int, opt ...int) Slice {
+func S(start int, opt ...int) *Range {
 	var end, step int
 	if len(opt) > 0 {
 		end = opt[0]
@@ -102,3 +105,6 @@ func sliceSize(sl Slice, sz int) (retVal int, err error) {
 	}
 	return
 }
+
+// ToSlicelike is a utility function for turning a slice into a Slicelike.
+func ToSlicelike(s Slice) Slicelike { return toRange(s) }

@@ -27,6 +27,7 @@ type Expr interface {
 type Var rune
 
 func (v Var) isSizelike()                {}
+func (v Var) isSlicelike()               {}
 func (v Var) isExpr()                    {}
 func (v Var) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%c", rune(v)) }
 func (v Var) apply(ss substitutions) substitutable {

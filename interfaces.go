@@ -103,3 +103,10 @@ type sizeOp interface {
 type resolver interface {
 	resolve() (Expr, error)
 }
+
+// Slicelike is anything like a slice. The following types implement Slicelike:
+// 	Range | Var
+type Slicelike interface {
+	substitutableExpr
+	isSlicelike()
+}

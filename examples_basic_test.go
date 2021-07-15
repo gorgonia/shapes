@@ -421,9 +421,9 @@ func Example_slice() {
 	simple := Arrow{
 		Var('a'),
 		Arrow{
-			sli,
+			Var('b'),
 			SliceOf{
-				sli,
+				Var('b'),
 				Var('a'),
 			},
 		},
@@ -439,7 +439,7 @@ func Example_slice() {
 
 	fmt.Printf("slice: %v\n", slice)
 
-	fst := Shape{2, 3, 4}
+	fst := Shape{5, 3, 4}
 	retExpr, err := InferApp(slice, fst)
 	if err != nil {
 		fmt.Println(err)
@@ -456,11 +456,11 @@ func Example_slice() {
 	fmt.Printf("\t%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
 
 	// Output:
-	// slice: { a → [0:2] → a[0:2] | (a[0] ≥ 2) }
-	// Applying (2, 3, 4) to { a → [0:2] → a[0:2] | (a[0] ≥ 2) }:
-	// 	{ a → [0:2] → a[0:2] | (a[0] ≥ 2) } @ (2, 3, 4) ↠ [0:2] → (2, 3, 4)[0:2]
-	// Applying [0:2] to [0:2] → (2, 3, 4)[0:2]:
-	// 	[0:2] → (2, 3, 4)[0:2] @ [0:2] ↠ (2, 3, 4)[0:2]
+	// slice: { a → b → a[b] | (a[0] ≥ 2) }
+	// Applying (5, 3, 4) to { a → b → a[b] | (a[0] ≥ 2) }:
+	// 	{ a → b → a[b] | (a[0] ≥ 2) } @ (5, 3, 4) ↠ b → (5, 3, 4)[b]
+	// Applying [0:2] to b → (5, 3, 4)[b]:
+	// 	b → (5, 3, 4)[b] @ [0:2] ↠ (2, 3, 4)
 
 }
 
