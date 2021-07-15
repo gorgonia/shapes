@@ -272,17 +272,10 @@ var shapeRepeatTests = []struct {
 
 func TestShape_Repeat(t *testing.T) {
 	assert := assert.New(t)
-	for _, srts := range shapeRepeatTests {
+	for i, srts := range shapeRepeatTests {
 		newShape, reps, size, err := srts.s.Repeat(srts.axis, srts.repeats...)
 
-		switch {
-		case srts.err:
-			if err == nil {
-				t.Error("Expected an error")
-			}
-			continue
-		case !srts.err && err != nil:
-			t.Error(err)
+		if checkErr(t, srts.err, err, srts.name, i) {
 			continue
 		}
 		shp, ok := newShape.(Shape)

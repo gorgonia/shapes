@@ -104,3 +104,36 @@ func ExampleSlice_s() {
 	// (10, 20, 30, 20) → (4, 4, 4, 3) @ (10, 20, 30, 20) ↠ (4, 4, 4, 3)
 
 }
+
+var absRepeatTests = []struct {
+	name    string
+	a       Abstract
+	repeats []int
+	axis    Axis
+
+	expected        Shapelike
+	expectedRepeats []int
+	expectedSize    int
+	err             bool
+}{
+	{"vector repeat on axis 0", Abstract{Var('a')}, []int{3}, 0, Abstract{BinOp{Mul, Var('a'), Size(3)}}, []int{3}, -1, false},
+	{"vector repeat on axis 1", Abstract{Var('a')}, []int{3}, 1, Abstract{Var('a'), Size(3)}, []int{3}, 1, false},
+	{"var matrix repeat on axis 0", Abstract{Var('a'), Var('b')}, []int{1, 3}, 0, Abstract{Size(4), Var('b')}, nil, -1, false},
+	{"var matrix repeat on axis 1", Abstract{Var('a'), Var('b')}, []int{1, 3}, 1, Abstract{Var('a'), Size(4)}, nil, -1, false},
+	{"var matrix generic repeat on axis 0", Abstract{Var('a'), Var('b')}, []int{3}, 0, Abstract{BinOp{Mul, Var('a'), Size(3)}, Var('b')}, []int{3}, -1, false},
+	{"var matrix generic repeat on axis 1", Abstract{Var('a'), Var('b')}, []int{3}, 1, Abstract{Var('a'), BinOp{Mul, Var('b'), Size(3)}}, []int{3}, -1, false},
+}
+
+func TestAbs_Repeat(t *testing.T) {
+	assert := assert.New(t)
+	for i, c := range absRepeatTests {
+		newShape, reps, size, err := c.a.Repeat(c.axis, c.repeats...)
+		if checkErr(t, c.err, err, c.name, i) {
+			continue
+		}
+
+		assert.Equal(c.expected, newShape, "Test %v - Shape like not the same", c.name)
+		assert.Equal(c.expectedRepeats, reps, "Test %v - Repeats not the same", c.name)
+		assert.Equal(c.expectedSize, size, "Test %v - Size not the same", c.name)
+	}
+}

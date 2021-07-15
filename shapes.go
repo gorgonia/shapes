@@ -211,7 +211,7 @@ func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats
 		newShape = s.Clone().(Shape)
 		newShape = append(newShape, 1)
 	default:
-		if int(axis) >= len(s) {
+		if int(axis) >= s.Dims() {
 			// error
 			err = errors.Errorf(invalidAxis, axis, s.Dims())
 			return

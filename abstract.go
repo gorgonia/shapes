@@ -148,13 +148,98 @@ func (a Abstract) S(slices ...Slice) (newShape Shapelike, err error) {
 
 	}
 
-	// TODO: drop dimensions with size 1
+	// drop any dimension with size 1, except the last dimension
+	offset := 0
+	dims := a.Dims()
+	for d := 0; d < dims; d++ {
+		if sz, ok := retVal[d].(Size); ok && sz == 1 && offset+d <= len(slices)-1 && slices[offset+d] != nil {
+			retVal = append(retVal[:d], retVal[d+1:]...)
+			d--
+			dims--
+			offset++
+		}
+	}
+
+	if shp, ok := retVal.ToShape(); ok {
+		if shp.IsScalar() {
+			return ScalarShape(), nil
+		}
+		return shp, nil
+	}
 
 	return retVal, nil
 }
 
-func (a Abstract) Repeat(axis Axis, repeats ...int) (newShape Shapelike, finalRepeats []int, size int, err error) {
-	panic("not implemented") // TODO: Implement
+func (a Abstract) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats []int, size int, err error) {
+	var newShape Abstract
+	var sz Sizelike
+	switch {
+	case axis == AllAxes:
+		sz = UnaryOp{Prod, a}
+		newShape = Abstract{sz}
+		axis = 0
+	case a.Dims() == 1 && axis == 1: // "vector"
+		sz = Size(1)
+		newShape = a.Clone().(Abstract)
+		newShape = append(newShape, Size(1))
+	default:
+		if int(axis) >= a.Dims() {
+			// error
+			err = errors.Errorf(invalidAxis, axis, a.Dims())
+			return
+		}
+		sz = a[axis]
+		newShape = a.Clone().(Abstract)
+	}
+
+	size = -1
+	switch s := sz.(type) {
+	case Size:
+		size = int(s)
+		// special case to allow generic repeats
+		if size > 0 && len(repeats) == 1 {
+			rep := repeats[0]
+			repeats = make([]int, size)
+			for i := range repeats {
+				repeats[i] = rep
+			}
+		}
+		// optimistically check
+		reps := len(repeats)
+		if size > 0 && reps != size {
+			err = errors.Errorf(broadcastError, size, reps)
+			return
+		}
+		newSize := sumInts(repeats)
+		newShape[axis] = Size(newSize)
+
+		// set return values
+		finalRepeats = repeats
+	default:
+		// special case to allow generic repeats
+		if len(repeats) == 1 {
+			rep := Size(repeats[0])
+			newSize := BinOp{Mul, sz.(Expr), rep}
+			newShape[axis] = newSize
+
+			finalRepeats = repeats
+		} else {
+			// cannot check if newShape[axis] == len(repeats)
+			// gotta take it on faith
+			newSize := sumInts(repeats)
+			newShape[axis] = Size(newSize)
+			// don't set finalRepeats. Should be nil
+		}
+	}
+
+	retVal = newShape
+
+	// try to resolve
+	if x, err := newShape.resolve(); err == nil {
+		retVal = x.(Shapelike)
+	}
+
+	return
 }
 
 func (a Abstract) Concat(axis Axis, others ...Shapelike) (newShape Shapelike, err error) {
@@ -225,8 +310,7 @@ func (s Abstract) resolve() (Expr, error) {
 				return nil, errors.Errorf("%dth sizelike of %v is not resolveable to a Size", i, s)
 			}
 			retVal[i] = sz
-		case Size:
-			retVal[i] = v
+
 		default:
 			return nil, errors.Errorf("Sizelike of %T is unhandled by Abstract", v)
 		}
