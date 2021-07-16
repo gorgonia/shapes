@@ -7,6 +7,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_prodInts(t *testing.T) {
+	// nil or 0 length results
+	var a []int
+
+	if prodInts(a) != 1 {
+		t.Errorf("Expected prodInts of an empty list of ints to be 1")
+	}
+
+	a = []int{1, 1, 1, 1, 1}
+	if prodInts(a) != 1 {
+		t.Errorf("Expected prodInts of a list of 1s to be 1")
+	}
+
+	a = []int{1, 2, 3, 4, 5, 6}
+	if prodInts(a) != 720 {
+		t.Errorf("Expected prodInts to be 720")
+	}
+}
+
 func Example_unsafePermute() {
 	pattern := []int{2, 1, 3, 4, 0}
 	x1 := []int{1, 2, 3, 4, 5}
