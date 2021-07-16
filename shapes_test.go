@@ -253,6 +253,7 @@ var shapeRepeatTests = []struct {
 	expectedSize    int
 	err             bool
 }{
+
 	{"scalar repeat on axis 0", ScalarShape(), []int{3}, 0, Shape{3}, []int{3}, 1, false},
 	{"scalar repeat on axis 1", ScalarShape(), []int{3}, 1, Shape{1, 3}, []int{3}, 1, false},
 	{"vector repeat on axis 0", Shape{2}, []int{3}, 0, Shape{6}, []int{3, 3}, 2, false},
@@ -285,8 +286,8 @@ func TestShape_Repeat(t *testing.T) {
 		}
 
 		assert.True(srts.expected.Eq(shp), "Test %q:  Want: %v. Got %v", srts.name, srts.expected, newShape)
-		assert.Equal(srts.expectedRepeats, reps, "Test %q: ", srts.name)
-		assert.Equal(srts.expectedSize, size, "Test %q: ", srts.name)
+		assert.Equal(srts.expectedRepeats, reps, "Test %q - Expected Repeats %v. Got %v ", srts.name, srts.expectedRepeats, reps)
+		assert.Equal(srts.expectedSize, size, "Test %q: Expected size: %d. Got %d ", srts.name, srts.expectedSize, size)
 	}
 }
 

@@ -227,7 +227,6 @@ func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats
 		size = s[axis]
 		newShape = s.Clone()
 	}
-
 	// special case to allow generic repeats
 	if len(repeats) == 1 {
 		rep := repeats[0]

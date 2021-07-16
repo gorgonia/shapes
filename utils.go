@@ -18,11 +18,11 @@ func (t exprtup) freevars() varset {
 }
 
 func prodInts(a []int) int {
+	retVal := 1
 	if len(a) == 0 {
-		return 0
+		return retVal
 	}
-	retVal := a[0]
-	for i := 1; i < len(a); i++ {
+	for i := 0; i < len(a); i++ {
 		retVal *= a[i]
 	}
 	return retVal
