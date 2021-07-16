@@ -313,10 +313,7 @@ var shapeConcatTests = []struct {
 func TestShape_Concat(t *testing.T) {
 	assert := assert.New(t)
 	for _, scts := range shapeConcatTests {
-		sls := make([]Shapelike, 0, len(scts.ss))
-		for _, v := range scts.ss {
-			sls = append(sls, v)
-		}
+		sls := ShapesToShapelikes(scts.ss)
 		newShape, err := scts.s.Concat(scts.axis, sls...)
 		switch {
 		case scts.err:

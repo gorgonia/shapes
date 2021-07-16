@@ -412,6 +412,11 @@ func ShapeOf(a interface{}) Expr {
 	panic("Unreachable")
 }
 
-type noop struct{}
-
-func (noop) Error() string { return "NoOp" }
+// ShapesToShapelikes is a utility function that retuns a []Shapelike given a []Shape.
+func ShapesToShapelikes(ss []Shape) []Shapelike {
+	retVal := make([]Shapelike, 0, len(ss))
+	for _, v := range ss {
+		retVal = append(retVal, v)
+	}
+	return retVal
+}
