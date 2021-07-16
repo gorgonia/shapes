@@ -10,7 +10,7 @@ import (
 
 func TestShapes_Clone(t *testing.T) {
 	f := func(s Shape) bool {
-		s2 := s.Clone().(Shape)
+		s2 := s.Clone()
 		if !s.Eq(s2) {
 			return false
 		}

@@ -70,7 +70,7 @@ func (a Abstract) ToShape() (s Shape, ok bool) {
 	return s, true
 }
 
-func (a Abstract) Clone() interface{} {
+func (a Abstract) Clone() Abstract {
 	retVal := make(Abstract, len(a))
 	copy(retVal, a)
 	return retVal
@@ -109,7 +109,7 @@ func (a Abstract) S(slices ...Slice) (newShape Shapelike, err error) {
 		return
 	}
 
-	retVal := a.Clone().(Abstract)
+	retVal := a.Clone()
 	for d, size := range a {
 
 		var sl Slice // default is a nil Slice
@@ -180,7 +180,7 @@ func (a Abstract) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepe
 		axis = 0
 	case a.Dims() == 1 && axis == 1: // "vector"
 		sz = Size(1)
-		newShape = a.Clone().(Abstract)
+		newShape = a.Clone()
 		newShape = append(newShape, Size(1))
 	default:
 		if int(axis) >= a.Dims() {
@@ -189,7 +189,7 @@ func (a Abstract) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepe
 			return
 		}
 		sz = a[axis]
-		newShape = a.Clone().(Abstract)
+		newShape = a.Clone()
 	}
 
 	size = -1
@@ -298,7 +298,7 @@ func (s Abstract) subExprs() (retVal []substitutableExpr) {
 }
 
 func (s Abstract) resolve() (Expr, error) {
-	retVal := s.Clone().(Abstract)
+	retVal := s.Clone()
 	for i, v := range s {
 		switch r := v.(type) {
 		case sizeOp:

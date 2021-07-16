@@ -41,7 +41,7 @@ func (s Shape) toAbs(hint int) Abstract {
 	return retVal
 }
 
-func (s Shape) Clone() interface{} {
+func (s Shape) Clone() Shape {
 	retVal := make(Shape, len(s))
 	copy(retVal, s)
 	return retVal
@@ -164,7 +164,7 @@ func (s Shape) S(slices ...Slice) (newShape Shapelike, err error) {
 		return
 	}
 
-	retVal := s.Clone().(Shape)
+	retVal := s.Clone()
 
 	for d, size := range s {
 		var sl Slice // default is a nil Slice
@@ -216,7 +216,7 @@ func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats
 		}
 	case s.IsVector() && !s.IsRowVec() && !s.IsColVec() && axis == 1:
 		size = 1
-		newShape = s.Clone().(Shape)
+		newShape = s.Clone()
 		newShape = append(newShape, 1)
 	default:
 		if int(axis) >= s.Dims() {
@@ -225,7 +225,7 @@ func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats
 			return
 		}
 		size = s[axis]
-		newShape = s.Clone().(Shape)
+		newShape = s.Clone()
 	}
 
 	// special case to allow generic repeats
@@ -278,7 +278,7 @@ func (s Shape) Concat(axis Axis, ss ...Shapelike) (retVal Shapelike, err error) 
 		return
 	}
 
-	newShape := s.Clone().(Shape)
+	newShape := s.Clone()
 	for _, sl := range ss {
 		shp := sl.(Shape) // will panic if not a shape
 		for d := 0; d < dims; d++ {
