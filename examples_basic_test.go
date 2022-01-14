@@ -258,6 +258,29 @@ func Example_transpose() {
 	//
 }
 
+func Example_transpose_NoOp() {
+	axes := Axes{0, 1, 2, 3} // when the axes are monotonic, there is NoOp.
+	transpose := Arrow{
+		Var('a'),
+		TransposeOf{
+			axes,
+			Var('a'),
+		},
+	}
+	fst := Shape{1, 2, 3, 4}
+	retExpr, err := InferApp(transpose, fst)
+	if err != nil {
+		fmt.Printf("Error %v\n", err)
+	}
+	fmt.Printf("Applying %v to %v\n", fst, transpose)
+	fmt.Printf("\t%v @ %v ↠ %v", transpose, fst, retExpr)
+
+	// Output:
+	// Applying (1, 2, 3, 4) to a → T X[0 1 3 2] a
+	// 	a → T X[0 1 3 2] a @ (1, 2, 3, 4) ↠ (1, 2, 4, 3)
+
+}
+
 func Example_index() {
 	sizes := Sizes{0, 0, 1, 0}
 	simple := Arrow{

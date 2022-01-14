@@ -80,7 +80,8 @@ func (t TransposeOf) resolve() (Expr, error) {
 	switch at := t.A.(type) {
 	case Shapelike:
 		retVal, err := at.T(t.Axes...)
-		if err != nil {
+		_, ok := err.(NoOpError)
+		if !ok && err != nil {
 			return nil, err
 		}
 		return retVal.(Expr), nil
