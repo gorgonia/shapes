@@ -1,6 +1,12 @@
 package shapes
 
-import "fmt"
+import (
+	"fmt"
+)
+
+var (
+	_ Slicelike = Slices{Range{}, Range{}}
+)
 
 // Slice represents a slicing range.
 type Slice interface {
@@ -40,7 +46,7 @@ func (s Range) Format(st fmt.State, r rune) {
 	st.Write([]byte("]"))
 }
 
-/* Sli implements Slice */
+/* Range implements Slice */
 
 // Start returns the start of the slicing range
 func (s Range) Start() int { return s.start }
@@ -108,3 +114,30 @@ func sliceSize(sl Slice, sz int) (retVal int, err error) {
 
 // ToSlicelike is a utility function for turning a slice into a Slicelike.
 func ToSlicelike(s Slice) Slicelike { return toRange(s) }
+
+// Slices is a list of slices.
+type Slices []Slice
+
+func (ss Slices) isSlicelike()                        {}
+func (ss Slices) apply(_ substitutions) substitutable { return ss }
+func (ss Slices) freevars() varset                    { return nil }
+func (ss Slices) subExprs() []substitutableExpr       { return nil }
+func (ss Slices) Format(st fmt.State, r rune) {
+	st.Write([]byte("["))
+	for i, s := range ss {
+		start := s.Start()
+		end := s.End()
+		step := s.Step()
+		fmt.Fprintf(st, "%d", start)
+		if end-start > 1 {
+			fmt.Fprintf(st, ":%d", end)
+		}
+		if step > 1 {
+			fmt.Fprintf(st, "~:%d", step)
+		}
+		if i < len(ss)-1 {
+			st.Write([]byte(", "))
+		}
+	}
+	st.Write([]byte("]"))
+}

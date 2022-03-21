@@ -102,6 +102,8 @@ func (s SliceOf) Format(st fmt.State, r rune) {
 	switch s.Slice.(type) {
 	case Slice:
 		fmt.Fprintf(st, "%v%v", s.A, s.Slice)
+	case Slices:
+		fmt.Fprintf(st, "%v%v", s.A, s.Slice)
 	case Var:
 		fmt.Fprintf(st, "%v[%v]", s.A, s.Slice)
 
@@ -122,15 +124,24 @@ func (s SliceOf) subExprs() []substitutableExpr {
 func (s SliceOf) resolve() (Expr, error) {
 	switch at := s.A.(type) {
 	case Shapelike:
-		sl, ok := s.Slice.(Slice)
-		if !ok {
+		switch sl := s.Slice.(type) {
+		case Slice:
+			retVal, err := at.S(sl)
+			if err != nil {
+				return nil, errors.Wrapf(err, "Unable to resolve %v - .S() failed", s)
+			}
+			return retVal.(Expr), nil
+		case Slices:
+			retVal, err := at.S(sl...)
+			if err != nil {
+				return nil, errors.Wrapf(err, "Unable to resolve %v - .S() failed", s)
+			}
+			return retVal.(Expr), nil
+		default:
 			return s, nil
+
 		}
-		retVal, err := at.S(sl)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Unable to resolve %v - .S() failed", s)
-		}
-		return retVal.(Expr), nil
+
 	default:
 		return nil, errors.Errorf("Cannot slice Expression %v of %T", s.A, s.A)
 	}
@@ -205,4 +216,22 @@ func (r RepeatOf) resolve() (Expr, error) {
 	default:
 		return nil, errors.Errorf("Cannot Repeat Expression %v of %T", r.A, r.A)
 	}
+}
+
+// BroadcastOf represents the results of broadcasting A and B expr
+type BroadcastOf struct {
+	A, B Expr
+}
+
+func (b BroadcastOf) isExpr()                    {}
+func (b BroadcastOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "(%v||%v)", b.A, b.B) }
+func (b BroadcastOf) apply(ss substitutions) substitutable {
+	return BroadcastOf{
+		A: b.A.apply(ss).(Expr),
+		B: b.B.apply(ss).(Expr),
+	}
+}
+func (b BroadcastOf) freevars() varset { return append(b.A.freevars(), b.B.freevars()...) }
+func (b BroadcastOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{b.A.(substitutableExpr), b.B.(substitutableExpr)}
 }

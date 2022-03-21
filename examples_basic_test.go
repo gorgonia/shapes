@@ -487,6 +487,34 @@ func Example_slice() {
 
 }
 
+func Example_slice_basic() {
+	sli := Range{0, 2, 1}
+	last := Range{3, 4, 1}
+	so := SliceOf{
+		Slices{sli, sli, last},
+		Var('a'),
+	}
+	simple := Arrow{
+		Var('a'),
+		so,
+	}
+
+	fmt.Printf("Simple Slice: %v\n", simple)
+	fst := Shape{5, 3, 4}
+	retExpr, err := InferApp(simple, fst)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Applying %v to %v:\n\t%v @ %v ↠ %v\n", fst, simple, simple, fst, retExpr)
+
+	// Output:
+	// Simple Slice: a → a[0:2, 0:2, 3]
+	// Applying (5, 3, 4) to a → a[0:2, 0:2, 3]:
+	//	a → a[0:2, 0:2, 3] @ (5, 3, 4) ↠ (2, 2)
+
+}
+
 func Example_reshape() {
 	expr := Compound{
 		Arrow{
