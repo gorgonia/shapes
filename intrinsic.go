@@ -235,3 +235,40 @@ func (b BroadcastOf) freevars() varset { return append(b.A.freevars(), b.B.freev
 func (b BroadcastOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{b.A.(substitutableExpr), b.B.(substitutableExpr)}
 }
+
+// ReductOf represents the results of reducing A along the given axis.
+type ReductOf struct {
+	A     Expr
+	Along Axis
+}
+
+func (r ReductOf) isExpr()                    {}
+func (r ReductOf) Format(s fmt.State, c rune) { fmt.Fprintf(s, "/[%d]%v", int(r.Along), r.A) }
+func (r ReductOf) apply(ss substitutions) substitutable {
+	return ReductOf{
+		A:     r.A.apply(ss).(Expr),
+		Along: r.Along,
+	}
+}
+
+func (r ReductOf) freevars() varset { return r.A.freevars() }
+func (r ReductOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{r.A.(substitutableExpr)}
+}
+
+func (r ReductOf) resolve() (Expr, error) {
+	switch at := r.A.(type) {
+	case Shape:
+		retVal := make(Shape, len(at)-1)
+		copy(retVal, at[:int(r.Along)])
+		copy(retVal[int(r.Along):], at[int(r.Along)+1:])
+		return retVal, nil
+	case Abstract:
+		retVal := make(Abstract, len(at)-1)
+		copy(retVal, at[:int(r.Along)])
+		copy(retVal[int(r.Along):], at[int(r.Along)+1:])
+		return retVal, nil
+	default:
+		return nil, errors.Errorf("Cannot reduce Expression %v of %T", r.A, r.A)
+	}
+}

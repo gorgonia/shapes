@@ -601,24 +601,25 @@ func Example_colwiseSumMatrix() {
 	)
 	fmt.Printf("Numpy Compatible: %v\n", compat)
 
-	general := Compound{
-		Arrow{Var('a'), Var('b')},
-		SubjectTo{
-			Eq,
-			UnaryOp{Dims, Var('b')},
-			BinOp{
-				Sub,
-				UnaryOp{Dims, Var('a')},
-				Size(1),
-			},
-		},
-	}
+	general := Arrow{Var('a'), ReductOf{Var('a'), Axis(1)}}
+
 	fmt.Printf("General: %v\n", general)
+
+	fst := Shape{2, 3}
+	retExpr, err := InferApp(general, fst)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Applying %v to %v:\n", fst, general)
+	fmt.Printf("\t%v @ %v → %v", general, fst, retExpr)
 
 	// Output:
 	// Basic: (r, c) → (1, c)
 	// Numpy Compatible: (r, c) → (c)
-	// General: { a → b | (D b = D a - 1) }
+	// General: a → /[1]a
+	// Applying (2, 3) to a → /[1]a:
+	// 	a → /[1]a @ (2, 3) → (2)
+
 }
 
 func Example_trace() {
