@@ -51,13 +51,23 @@ func (v Var) subExprs() []substitutableExpr { return nil }
 type Axis int
 
 const (
-	AllAxes Axis = -1
+	AllAxes Axis = -65535
 )
 
 func (a Axis) isExpr()                              {}
 func (a Axis) apply(ss substitutions) substitutable { return a }
 func (a Axis) freevars() varset                     { return nil }
 func (a Axis) subExprs() []substitutableExpr        { return nil }
+
+func ResolveAxis(a Axis, s Shapelike) Axis {
+	if a == AllAxes {
+		return AllAxes
+	}
+	if a < 0 {
+		return Axis(s.Dims() + int(a))
+	}
+	return a
+}
 
 // Axes represents a list of axes.
 // Despite being a container type (i.e. an Axis is an Expr),

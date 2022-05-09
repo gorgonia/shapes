@@ -619,6 +619,24 @@ func Example_colwiseSumMatrix() {
 	// General: a → /[1]a
 	// Applying (2, 3) to a → /[1]a:
 	// 	a → /[1]a @ (2, 3) → (2)
+}
+
+func ExampleSumAllAxes() {
+	sum := Arrow{Var('a'), ReductOf{ReductOf{Var('a'), Axis(1)}, Axis(0)}}
+	fmt.Printf("Sum: %v\n", sum)
+	fst := Shape{2, 3}
+	retExpr, err := InferApp(sum, fst)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Applying %v to %v\n", fst, sum)
+	fmt.Printf("\t%v @ %v → %v", sum, fst, retExpr)
+
+	// Output:
+	// Sum: a → /[0]/[1]a
+	// Applying (2, 3) to a → /[0]/[1]a
+	// 	a → /[0]/[1]a @ (2, 3) → ()
 
 }
 

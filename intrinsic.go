@@ -257,18 +257,31 @@ func (r ReductOf) subExprs() []substitutableExpr {
 }
 
 func (r ReductOf) resolve() (Expr, error) {
-	switch at := r.A.(type) {
-	case Shape:
-		retVal := make(Shape, len(at)-1)
-		copy(retVal, at[:int(r.Along)])
-		copy(retVal[int(r.Along):], at[int(r.Along)+1:])
-		return retVal, nil
-	case Abstract:
-		retVal := make(Abstract, len(at)-1)
-		copy(retVal, at[:int(r.Along)])
-		copy(retVal[int(r.Along):], at[int(r.Along)+1:])
-		return retVal, nil
-	default:
-		return nil, errors.Errorf("Cannot reduce Expression %v of %T", r.A, r.A)
+	A := r.A
+
+	for {
+		switch at := A.(type) {
+		case Shape:
+			along := ResolveAxis(r.Along, at)
+			retVal := make(Shape, len(at)-1)
+			copy(retVal, at[:along])
+			copy(retVal[along:], at[along+1:])
+			return retVal, nil
+		case Abstract:
+			along := ResolveAxis(r.Along, at)
+			retVal := make(Abstract, len(at)-1)
+			copy(retVal, at[:along])
+			copy(retVal[along:], at[along+1:])
+			return retVal, nil
+		case resolver:
+			expr, err := at.resolve()
+			if err != nil {
+				return nil, err
+			}
+			A = expr
+		default:
+			return nil, errors.Errorf("Cannot reduce Expression %v of %T", r.A, r.A)
+		}
 	}
+
 }
