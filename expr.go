@@ -58,6 +58,13 @@ func (a Axis) isExpr()                              {}
 func (a Axis) apply(ss substitutions) substitutable { return a }
 func (a Axis) freevars() varset                     { return nil }
 func (a Axis) subExprs() []substitutableExpr        { return nil }
+func (a Axis) Format(s fmt.State, c rune) {
+	if a == AllAxes {
+		fmt.Fprintf(s, ":")
+		return
+	}
+	fmt.Fprintf(s, "%d", int(a))
+}
 
 func ResolveAxis(a Axis, s Shapelike) Axis {
 	if a == AllAxes {

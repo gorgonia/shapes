@@ -243,7 +243,7 @@ type ReductOf struct {
 }
 
 func (r ReductOf) isExpr()                    {}
-func (r ReductOf) Format(s fmt.State, c rune) { fmt.Fprintf(s, "/[%d]%v", int(r.Along), r.A) }
+func (r ReductOf) Format(s fmt.State, c rune) { fmt.Fprintf(s, "/[%d]%v", r.Along, r.A) }
 func (r ReductOf) apply(ss substitutions) substitutable {
 	return ReductOf{
 		A:     r.A.apply(ss).(Expr),
@@ -258,17 +258,22 @@ func (r ReductOf) subExprs() []substitutableExpr {
 
 func (r ReductOf) resolve() (Expr, error) {
 	A := r.A
-
 	for {
 		switch at := A.(type) {
 		case Shape:
 			along := ResolveAxis(r.Along, at)
+			if along == AllAxes {
+				return ScalarShape(), nil
+			}
 			retVal := make(Shape, len(at)-1)
 			copy(retVal, at[:along])
 			copy(retVal[along:], at[along+1:])
 			return retVal, nil
 		case Abstract:
 			along := ResolveAxis(r.Along, at)
+			if along == AllAxes {
+				return ScalarShape(), nil
+			}
 			retVal := make(Abstract, len(at)-1)
 			copy(retVal, at[:along])
 			copy(retVal[along:], at[along+1:])
