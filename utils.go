@@ -47,6 +47,18 @@ func allEq(a []int, e int) bool {
 	return true
 }
 
+func intsEq(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func substToInt(a substitutable) (int, bool) {
 	switch at := a.(type) {
 	case Size:

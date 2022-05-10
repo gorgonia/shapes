@@ -88,6 +88,7 @@ func (a Axes) freevars() varset                     { return nil }
 func (a Axes) subExprs() []substitutableExpr        { return nil }
 func (a Axes) Dims() int                            { return len(a) }
 func (a Axes) AsInts() []int                        { return axesToInts(a) }
+func (a Axes) Eq(other Axes) bool                   { return intsEq(axesToInts(a), axesToInts(other)) }
 
 // Size represents a size of a dimension/axis
 type Size int
