@@ -2,6 +2,7 @@ package shapes
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 )
@@ -240,6 +241,18 @@ func (b BroadcastOf) subExprs() []substitutableExpr {
 type ReductOf struct {
 	A     Expr
 	Along Axis
+}
+
+func Reduce(a Expr, along Axes) ReductOf {
+	ints := axesToInts(along)
+	sort.Sort(sort.Reverse(sort.IntSlice(ints)))
+
+	// innermost reductions first
+	var retVal Expr = a
+	for i := range ints {
+		retVal = ReductOf{retVal, Axis(ints[i])}
+	}
+	return retVal.(ReductOf)
 }
 
 func (r ReductOf) isExpr()                    {}

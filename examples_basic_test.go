@@ -622,7 +622,7 @@ func Example_colwiseSumMatrix() {
 }
 
 func Example_sum_allAxes() {
-	sum := Arrow{Var('a'), ReductOf{ReductOf{Var('a'), Axis(1)}, Axis(0)}}
+	sum := Arrow{Var('a'), Reduce(Var('a'), Axes{0, 1})}
 	fmt.Printf("Sum: %v\n", sum)
 	fst := Shape{2, 3}
 	retExpr, err := InferApp(sum, fst)
