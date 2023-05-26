@@ -101,9 +101,10 @@ func (s Shape) IsScalarEquiv() bool {
 }
 
 // IsVector returns whether the access pattern falls into one of three possible definitions of vectors:
-//		vanilla vector (not a row or a col)
-//		column vector
-//		row vector
+//
+//	vanilla vector (not a row or a col)
+//	column vector
+//	row vector
 func (s Shape) IsVector() bool { return s.IsColVec() || s.IsRowVec() || (len(s) == 1) }
 
 // IsColVec returns true when the access pattern has the shape (x, 1)
@@ -114,7 +115,8 @@ func (s Shape) IsRowVec() bool { return len(s) == 2 && (s[0] == 1 && s[1] > 1) }
 
 // IsVectorLike returns true when the shape looks like a vector
 // e.g. a number that is surrounded by 1s:
-// 	(1, 1, ... 1, 10, 1, 1... 1)
+//
+//	(1, 1, ... 1, 10, 1, 1... 1)
 func (s Shape) IsVectorLike() bool {
 	var nonOnes int
 	for _, i := range s {
@@ -208,12 +210,17 @@ func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats
 	case s.IsScalar():
 		size = 1
 		// special case for row vecs
-		if axis == 1 {
-			newShape = Shape{1, 0}
-		} else {
-			// otherwise it will be repeated into a vanilla vector
-			newShape = Shape{0}
+		newShape = make(Shape, axis+1)
+		for i := range newShape {
+			newShape[i] = 1
 		}
+
+		// if axis == 1 {
+		// 	newShape = Shape{1, 0}
+		// } else {
+		// 	// otherwise it will be repeated into a vanilla vector
+		// 	newShape = Shape{0}
+		// }
 	case s.IsVector() && !s.IsRowVec() && !s.IsColVec() && axis == 1:
 		size = 1
 		newShape = s.Clone()
