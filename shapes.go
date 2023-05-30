@@ -11,9 +11,17 @@ var (
 	scalarShape = Shape{}
 )
 
+// ScalarShape returns a shape that represents a scalar shape.
+//
+// Usually `nil` will also be considered a scalar shape
+// (because a `nil` of type `Shape` has a length of 0 and will return true when `.IsScalar` is called)
 func ScalarShape() Shape { return scalarShape }
 
+// Shape represents the shape of a multidimensional array.
 type Shape []int
+
+// Shape implements Shaper - it returns itself
+func (s Shape) Shape() Shape { return s }
 
 // Cons is an associative construction of shapes
 func (s Shape) Cons(other Conser) Conser {
