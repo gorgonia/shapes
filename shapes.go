@@ -145,16 +145,30 @@ func (s Shape) TotalSize() int { return prodInts([]int(s)) }
 
 // DimSize returns the dimension wanted.
 func (s Shape) DimSize(d int) (retVal Sizelike, err error) {
-	if (s.IsScalar() && d != 0) || (!s.IsScalar() && d >= len(s)) {
-		err = errors.Errorf(dimMismatch, len(s), d)
-		return
+	ret, err := s.Dim(d)
+	if err != nil {
+		return nil, err
 	}
+	return Size(ret), nil
+}
 
+// Dim returns the dimension wanted,
+func (s Shape) Dim(d int) (retVal int, err error) {
+	if (s.IsScalar() && d != 0) || (!s.IsScalar() && d >= len(s)) {
+		return -1, errors.Errorf(dimMismatch, len(s), d)
+	}
 	switch {
 	case s.IsScalar():
-		return Size(0), nil
+		return 0, nil
+	case d < 0:
+		od := d
+		d = s.Dims() + d
+		if d < 0 {
+			return -1, errors.Errorf(dimMismatch, len(s), od)
+		}
+		fallthrough
 	default:
-		return Size(s[d]), nil
+		return s[d], nil
 	}
 }
 

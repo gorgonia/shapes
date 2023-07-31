@@ -329,3 +329,44 @@ func TestShape_Concat(t *testing.T) {
 		assert.Equal(scts.expected, newShape)
 	}
 }
+
+var shapeDimTests = []struct {
+	name string
+	s    Shape
+	dim  int
+
+	expected int
+	err      bool
+}{
+	{"standard behaviour - 0", Shape{2, 3, 4}, 0, 2, false},
+	{"standard behaviour - 1", Shape{2, 3, 4}, 1, 3, false},
+	{"standard behaviour - 2", Shape{2, 3, 4}, 2, 4, false},
+	{"non-standard behaviour - -1", Shape{2, 3, 4}, -1, 4, false},
+	{"non-standard behaviour - -2", Shape{2, 3, 4}, -2, 3, false},
+	{"non-standard behaviour - -3", Shape{2, 3, 4}, -3, 2, false},
+	{"standard on scalar", Shape{}, 0, 0, false},
+
+	// naughty
+	{"scalar but dim ≠ 0", Shape{}, -1, -1, true},
+	{"d > dims", Shape{2, 3, 4}, 3, -1, true},
+	{"d < -dims", Shape{2, 3, 4}, -4, -1, true},
+}
+
+func TestShape_Dim(t *testing.T) {
+	assert := assert.New(t)
+	for _, sdt := range shapeDimTests {
+		t.Run(sdt.name, func(t *testing.T) {
+			sz, err := sdt.s.Dim(sdt.dim)
+			switch {
+			case sdt.err:
+				assert.NotNil(err, "%v should cause an error", sdt.name)
+				return
+			default:
+				if !assert.Nil(err, "%v should not have an error", sdt.name) {
+					return
+				}
+				assert.Equal(sdt.expected, sz)
+			}
+		})
+	}
+}
