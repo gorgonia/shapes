@@ -432,3 +432,46 @@ func ShapesToShapelikes(ss []Shape) []Shapelike {
 	}
 	return retVal
 }
+
+// AreBroadcastable checks that two shapes are mutually broadcastable.
+func AreBroadcastable(a, b Shape) (err error) {
+	if a.Eq(b) {
+		return noopError{}
+	}
+	if a.Dims() != b.Dims() {
+		return errors.Errorf(dimMismatch, a.Dims(), b.Dims())
+	}
+	maxDim := a.Dims()
+
+	// now, we check the shapes for broadcastability
+	// if the shapes are not broadcastable, we return an error
+	for i := maxDim - 1; i >= 0; i-- {
+		bDim := a[i]
+		aDim := b[i]
+		if bDim != aDim && bDim != 1 && aDim != 1 {
+			return errors.Errorf(broadcastErr, a, b, i)
+		}
+	}
+	return
+}
+
+// CalcBroadcastShape computes the final shape of two mutually broadcastable shapes.
+// This function does not check that the shapes are mutually broadcastable.
+// Use `AreBroadcastable` for that functionality.
+func CalcBroadcastShape(a, b Shape) Shape {
+	retVal := make(Shape, 0, a.Dims())
+	for i, u := range a {
+		v := b[i]
+		switch {
+		case u > v:
+			// assumes v == 1
+			retVal = append(retVal, u)
+		case v > u:
+			// assumes u == 1
+			retVal = append(retVal, v)
+		case u == v:
+			retVal = append(retVal, u)
+		}
+	}
+	return retVal
+}

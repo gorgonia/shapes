@@ -237,6 +237,15 @@ func (b BroadcastOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{b.A.(substitutableExpr), b.B.(substitutableExpr)}
 }
 
+func (b BroadcastOf) resolve() (Expr, error) {
+	A, aok := b.A.(Shape)
+	B, bok := b.B.(Shape)
+	if aok && bok {
+		return CalcBroadcastShape(A, B), nil
+	}
+	return b, noopError{}
+}
+
 // ReductOf represents the results of reducing A along the given axis.
 type ReductOf struct {
 	A     Expr

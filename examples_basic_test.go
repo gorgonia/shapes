@@ -688,7 +688,29 @@ func Example_broadcast() {
 		UnaryOp{Const, Var('b')},
 	}}
 
+	fst := Shape{2, 3, 4}
+	snd := Shape{2, 1, 4}
+
+	retExpr1, err := InferApp(expr, fst)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	retExpr2, err := InferApp(retExpr1, snd)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	fmt.Printf("Add: %v\n", expr)
+	fmt.Printf("Applying %v to %v\n", fst, expr)
+	fmt.Printf("\t%v @ %v → %v\n", expr, fst, retExpr1)
+
+	fmt.Printf("Applying %v to %v\n", snd, retExpr1)
+	fmt.Printf("\t%v @ %v → %v", retExpr1, snd, retExpr2)
 	// Output:
 	// Add: { a → b → (a||b) | (K a ⚟ K b) }
+	// Applying (2, 3, 4) to { a → b → (a||b) | (K a ⚟ K b) }
+	//	{ a → b → (a||b) | (K a ⚟ K b) } @ (2, 3, 4) → { b → ((2, 3, 4)||b) | (K (2, 3, 4) ⚟ K b) }
+	// Applying (2, 1, 4) to { b → ((2, 3, 4)||b) | (K (2, 3, 4) ⚟ K b) }
+	//	{ b → ((2, 3, 4)||b) | (K (2, 3, 4) ⚟ K b) } @ (2, 1, 4) → (2, 3, 4)
 }

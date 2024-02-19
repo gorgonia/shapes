@@ -22,15 +22,20 @@ func (ce ConstraintsExpr) Format(f fmt.State, r rune) {
 // This function will aggressively perform alpha renaming on the expression.
 //
 // Example. Given an application of the following:
-// 	((a,b) → (b, c) → (a, c)) @ (2, a)
+//
+//	((a,b) → (b, c) → (a, c)) @ (2, a)
 //
 // The variables in the latter will be aggressively renamed, to become:
+//
 //	((a,b) → (b, c) → (a, c)) @ (2, d)
 //
 // Normally this wouldn't be a concern, as you would be passing in concrete shapes, something like:
+//
 //	((a,b) → (b, c) → (a, c)) @ (2, 3)
+//
 // which will then yield:
-// 	(3, c) → (2, c)
+//
+//	(3, c) → (2, c)
 func App(ar Expr, b Expr) ConstraintsExpr {
 	var a Arrow
 	var st SubjectTo
@@ -184,6 +189,9 @@ func recursiveResolve(a Expr) (Expr, error) {
 		return Shape{int(sz)}, nil
 	case resolver:
 		retVal, err := at.resolve()
+		if _, ok := err.(NoOpError); ok {
+			return retVal, nil
+		}
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to recursively resolve %v", at)
 		}

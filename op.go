@@ -2,7 +2,6 @@ package shapes
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
 )
 
@@ -137,83 +136,12 @@ func (op BinOp) resolveBool() (bool, error) {
 	}
 	A, B, err := op.resolveAB()
 	if err != nil {
-		auo, aok := extractForAll(op.A)
-		buo, bok := extractForAll(op.B)
-		var ok bool
-		switch {
-		case aok && bok:
-			var A, B intslike
-			if A, ok = auo.A.(intslike); !ok {
-				return false, errors.Errorf("Unable to reolve %v to bool. Operand A's expression of %T is not intslike.", op, auo.A)
-			}
-			if B, ok = buo.A.(intslike); !ok {
-				return false, errors.Errorf("Unable to reolve %v to bool. Operand B's expression of %T is not intslike.", op, buo.A)
-			}
-			al, bl := A.AsInts(), B.AsInts()
-			if len(al) != len(bl) {
-				return false, nil // will always be false because you cannot compare slices of unequal length. Does this mean it should have an error message? Unsure
-			}
-			bl = bl[:len(al)]
-			for i, a := range al {
-				b := bl[i]
-				ok, err := op.do(Size(a), Size(b))
-				if err != nil {
-					return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
-				}
-				if !ok {
-					return false, nil
-				}
-			}
-		case !aok && bok:
-			A, ok := op.A.(sizeOp)
-			if !ok {
-				return false, errors.Errorf("Unable to resolve %v to bool. Operand A's expression of %T is not a sizeOp", op, op.A)
-			}
-			B, ok := buo.A.(intslike)
-			if !ok {
-				return false, errors.Errorf("Unable to resolve %v to bool. Operand B's expression of %T is not intslike", op, buo.A)
-			}
-			a, err := A.resolveSize()
-			if err != nil {
-				return false, errors.Wrapf(err, "Unable to resolve %v to bool. Operand A %v was unable to be resolved into a Size", op, op.A)
-			}
-			bl := B.AsInts()
-			for i, b := range bl {
-				ok, err := op.do(a, Size(b))
-				if err != nil {
-					return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
-				}
-				if !ok {
-					return false, nil
-				}
-			}
-		case aok && !bok:
-			A, ok := auo.A.(intslike)
-			if !ok {
-				return false, errors.Errorf("Unable to resolve %v to bool. Operand A's expression of %T is not intslike", op, auo.A)
-			}
-			B, ok := op.B.(sizeOp)
-			if !ok {
-				return false, errors.Errorf("Unable to resolve %v to bool. Operand B's expression of %T is not a sizeOp", op, op.B)
-			}
-			b, err := B.resolveSize()
-			if err != nil {
-				return false, errors.Wrapf(err, "Unable to resolve %v to bool. Operand B %v was unable to be resolved into a Size", op, op.B)
-			}
-			al := A.AsInts()
-			for i, a := range al {
-				ok, err := op.do(Size(a), b)
-				if err != nil {
-					return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
-				}
-				if !ok {
-					return false, nil
-				}
-			}
-		default:
-			return false, errors.Errorf("Unable to resolve %v to a bool", op)
+		retVal, err := op.resolveForAllAB()
+		if err == nil {
+			return retVal, nil
 		}
-		return true, nil
+
+		return op.resolveBroadcastAB()
 	}
 	return op.do(A, B)
 }
@@ -268,6 +196,104 @@ func (op BinOp) resolveAB() (A, B Size, err error) {
 		return 0, 0, errors.Errorf("Cannot resolve BinOp %v - B is not resolved to a Size", op)
 	}
 	return
+}
+
+func (op BinOp) resolveForAllAB() (bool, error) {
+	auo, aok := extractForAll(op.A)
+	buo, bok := extractForAll(op.B)
+	var ok bool
+	switch {
+	case aok && bok:
+		var A, B intslike
+		if A, ok = auo.A.(intslike); !ok {
+			return false, errors.Errorf("Unable to reolve %v to bool. Operand A's expression of %T is not intslike.", op, auo.A)
+		}
+		if B, ok = buo.A.(intslike); !ok {
+			return false, errors.Errorf("Unable to reolve %v to bool. Operand B's expression of %T is not intslike.", op, buo.A)
+		}
+		al, bl := A.AsInts(), B.AsInts()
+		if len(al) != len(bl) {
+			return false, nil // will always be false because you cannot compare slices of unequal length. Does this mean it should have an error message? Unsure
+		}
+		bl = bl[:len(al)]
+		for i, a := range al {
+			b := bl[i]
+			ok, err := op.do(Size(a), Size(b))
+			if err != nil {
+				return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
+			}
+			if !ok {
+				return false, nil
+			}
+		}
+	case !aok && bok:
+		A, ok := op.A.(sizeOp)
+		if !ok {
+			return false, errors.Errorf("Unable to resolve %v to bool. Operand A's expression of %T is not a sizeOp", op, op.A)
+		}
+		B, ok := buo.A.(intslike)
+		if !ok {
+			return false, errors.Errorf("Unable to resolve %v to bool. Operand B's expression of %T is not intslike", op, buo.A)
+		}
+		a, err := A.resolveSize()
+		if err != nil {
+			return false, errors.Wrapf(err, "Unable to resolve %v to bool. Operand A %v was unable to be resolved into a Size", op, op.A)
+		}
+		bl := B.AsInts()
+		for i, b := range bl {
+			ok, err := op.do(a, Size(b))
+			if err != nil {
+				return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
+			}
+			if !ok {
+				return false, nil
+			}
+		}
+	case aok && !bok:
+		A, ok := auo.A.(intslike)
+		if !ok {
+			return false, errors.Errorf("Unable to resolve %v to bool. Operand A's expression of %T is not intslike", op, auo.A)
+		}
+		B, ok := op.B.(sizeOp)
+		if !ok {
+			return false, errors.Errorf("Unable to resolve %v to bool. Operand B's expression of %T is not a sizeOp", op, op.B)
+		}
+		b, err := B.resolveSize()
+		if err != nil {
+			return false, errors.Wrapf(err, "Unable to resolve %v to bool. Operand B %v was unable to be resolved into a Size", op, op.B)
+		}
+		al := A.AsInts()
+		for i, a := range al {
+			ok, err := op.do(Size(a), b)
+			if err != nil {
+				return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
+			}
+			if !ok {
+				return false, nil
+			}
+		}
+	default:
+		// not foralls.
+
+	}
+	return false, errors.Errorf("Unable to resolve %v to a bool", op)
+}
+
+func (op BinOp) resolveBroadcastAB() (bool, error) {
+	A, ok := op.A.(UnaryOp)
+	if !ok {
+		return false, errors.Errorf("Expected a unary op in A")
+	}
+	B, ok := op.B.(UnaryOp)
+	if !ok {
+		return false, errors.Errorf("Expected a unary op in B")
+	}
+	err := AreBroadcastable(A.A.(Shape), B.A.(Shape))
+	if _, ok := err.(NoOpError); ok || err == nil {
+		return true, nil
+	}
+
+	return false, err
 }
 
 // BinOp implements substitutable

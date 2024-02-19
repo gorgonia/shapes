@@ -6,6 +6,7 @@ const (
 	repeatedAxis      = "repeated axis %d in permutation pattern."
 	invalidSliceIndex = "Invalid slice index. Start: %d, End: %d."
 	unaryOpResolveErr = "Cannot resolve %v to a Size."
+	broadcastErr      = "Cannot broadcast %v with %v. %d-th dimension does not match or is not a 1."
 )
 
 // NoOpError is a useful for operations that have no op.
