@@ -302,7 +302,7 @@ var shapeConcatTests = []struct {
 }{
 	{"standard, axis 0 ", Shape{2, 2}, 0, []Shape{{2, 2}, {2, 2}}, Shape{6, 2}, false},
 	{"standard, axis 1 ", Shape{2, 2}, 1, []Shape{{2, 2}, {2, 2}}, Shape{2, 6}, false},
-	{"standard, axis AllAxes ", Shape{2, 2}, -1, []Shape{{2, 2}, {2, 2}}, Shape{6, 2}, false},
+	{"standard, axis AllAxes ", Shape{2, 2}, AllAxes, []Shape{{2, 2}, {2, 2}}, Shape{6, 2}, false},
 	{"concat to empty", Shape{2}, 0, nil, Shape{2}, false},
 
 	{"stupids: different dims", Shape{2, 2}, 0, []Shape{{2, 3, 2}}, nil, true},
@@ -323,7 +323,7 @@ func TestShape_Concat(t *testing.T) {
 			}
 			continue
 		case !scts.err && err != nil:
-			t.Error(err)
+			t.Errorf("Test %v err %v", scts.name, err)
 			continue
 		}
 		assert.Equal(scts.expected, newShape)

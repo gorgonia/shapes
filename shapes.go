@@ -279,7 +279,6 @@ func (s Shape) Repeat(axis Axis, repeats ...int) (retVal Shapelike, finalRepeats
 }
 
 func (s Shape) Concat(axis Axis, ss ...Shapelike) (retVal Shapelike, err error) {
-
 	dims := s.Dims()
 
 	// check that all the concatenates have the same dimensions
