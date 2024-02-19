@@ -2,6 +2,7 @@ package shapes
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
 )
 
@@ -274,9 +275,9 @@ func (op BinOp) resolveForAllAB() (bool, error) {
 		}
 	default:
 		// not foralls.
-
+		return false, errors.Errorf("Unable to resolve %v to a bool", op)
 	}
-	return false, errors.Errorf("Unable to resolve %v to a bool", op)
+	return true, nil
 }
 
 func (op BinOp) resolveBroadcastAB() (bool, error) {
@@ -288,12 +289,17 @@ func (op BinOp) resolveBroadcastAB() (bool, error) {
 	if !ok {
 		return false, errors.Errorf("Expected a unary op in B")
 	}
-	err := AreBroadcastable(A.A.(Shape), B.A.(Shape))
-	if _, ok := err.(NoOpError); ok || err == nil {
-		return true, nil
-	}
+	aShp, aok := A.A.(Shape)
+	bShp, bok := B.A.(Shape)
+	if aok && bok {
+		err := AreBroadcastable(aShp, bShp)
+		if _, ok := err.(NoOpError); ok || err == nil {
+			return true, nil
+		}
 
-	return false, err
+		return false, err
+	}
+	return false, errors.Errorf("Cannot resolve BroadcastAB")
 }
 
 // BinOp implements substitutable
