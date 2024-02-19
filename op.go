@@ -31,6 +31,9 @@ const (
 	// Logic: bool → bool → bool
 	And
 	Or
+
+	// Broadcast
+	Bc
 )
 
 var optypeStr = map[OpType]string{
@@ -51,6 +54,8 @@ var optypeStr = map[OpType]string{
 	Gte:    "≥",
 	And:    "∧",
 	Or:     "∨",
+
+	Bc: "⚟",
 }
 var optypeRune = map[rune]OpType{
 	'K': Const,
@@ -70,6 +75,8 @@ var optypeRune = map[rune]OpType{
 	'≥': Gte,
 	'∧': And,
 	'∨': Or,
+
+	'⚟': Bc,
 }
 
 // String returns the string representation

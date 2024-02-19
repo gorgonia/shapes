@@ -66,7 +66,7 @@ type TransposeOf struct {
 }
 
 func (t TransposeOf) isExpr()                    {}
-func (t TransposeOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "T %v %v", t.Axes, t.A) }
+func (t TransposeOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "T%x %v", t.Axes, t.A) }
 func (t TransposeOf) apply(ss substitutions) substitutable {
 	return TransposeOf{
 		Axes: t.Axes,
@@ -192,7 +192,7 @@ type RepeatOf struct {
 
 func (r RepeatOf) isExpr() {}
 func (r RepeatOf) Format(s fmt.State, ru rune) {
-	fmt.Fprintf(s, "Repeat{%d}{%v} %v", r.Along, r.Repeats, r.A)
+	fmt.Fprintf(s, "Repeat%x{%v} %v", r.Along, r.Repeats, r.A)
 }
 func (r RepeatOf) apply(ss substitutions) substitutable {
 	return RepeatOf{
@@ -219,7 +219,7 @@ func (r RepeatOf) resolve() (Expr, error) {
 	}
 }
 
-// BroadcastOf represents the results of broadcasting A and B expr
+// BroadcastOf represents the results of mutually broadcasting A and B expr.
 type BroadcastOf struct {
 	A, B Expr
 }
@@ -256,7 +256,7 @@ func Reduce(a Expr, along Axes) ReductOf {
 }
 
 func (r ReductOf) isExpr()                    {}
-func (r ReductOf) Format(s fmt.State, c rune) { fmt.Fprintf(s, "/[%d]%v", r.Along, r.A) }
+func (r ReductOf) Format(s fmt.State, c rune) { fmt.Fprintf(s, "/%x%v", r.Along, r.A) }
 func (r ReductOf) apply(ss substitutions) substitutable {
 	return ReductOf{
 		A:     r.A.apply(ss).(Expr),

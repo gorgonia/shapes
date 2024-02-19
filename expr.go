@@ -7,15 +7,17 @@ import (
 //go-sumtype:decl Expr
 
 // Expr represents an expression. The following types are Expr:
-// 	Shape | Abstract | Arrow | Compound
-// 	Var | Size | UnaryOp
-// 	IndexOf | TransposeOf | SliceOf | RepeatOf | ConcatOf
+//
+//	Shape | Abstract | Arrow | Compound
+//	Var | Size | UnaryOp
+//	IndexOf | TransposeOf | SliceOf | RepeatOf | ConcatOf
 //	Sli | Axis | Axes
 //
 // A compact BNF is as follows:
-// 	E := S | A | E → E | (E s.t. X)
+//
+//	E := S | A | E → E | (E s.t. X)
 //	a | Sz | Π E | Σ E | D E
-// 	I n E | T []Ax E | L : E | R Ax n E | C Ax E E
+//	I n E | T []Ax E | L : E | R Ax n E | C Ax E E
 //	: | Ax | []Ax
 type Expr interface {
 	isExpr()
@@ -24,9 +26,9 @@ type Expr interface {
 }
 
 // Var represents a variable. A variable can represent:
-// 	- a Shape (e.g. a in the expression a → b)
-// 	- a Size (e.g. (a, b))
-//	- a Slice (in Arrow expressions)
+//   - a Shape (e.g. a in the expression a → b)
+//   - a Size (e.g. (a, b))
+//   - a Slice (in Arrow expressions)
 type Var rune
 
 func (v Var) isSizelike()                {}
@@ -59,6 +61,14 @@ func (a Axis) apply(ss substitutions) substitutable { return a }
 func (a Axis) freevars() varset                     { return nil }
 func (a Axis) subExprs() []substitutableExpr        { return nil }
 func (a Axis) Format(s fmt.State, c rune) {
+	if c == 'x' {
+		if a == AllAxes {
+			fmt.Fprintf(s, "⁼")
+			return
+		}
+		fmt.Fprintf(s, supInt(int(a)))
+		return
+	}
 	if a == AllAxes {
 		fmt.Fprintf(s, ":")
 		return
@@ -81,8 +91,14 @@ func ResolveAxis(a Axis, s Shapelike) Axis {
 // it returns nil for Exprs(). This is because we want to treat Axes as a monolithic entity.
 type Axes []Axis
 
-func (a Axes) isExpr()                              {}
-func (a Axes) Format(s fmt.State, r rune)           { fmt.Fprintf(s, "X%v", axesToInts(a)) }
+func (a Axes) isExpr() {}
+func (a Axes) Format(s fmt.State, r rune) {
+	if r == 'x' {
+		fmt.Fprintf(s, supInts(axesToInts(a)))
+		return
+	}
+	fmt.Fprintf(s, "X%v", axesToInts(a))
+}
 func (a Axes) apply(ss substitutions) substitutable { return a }
 func (a Axes) freevars() varset                     { return nil }
 func (a Axes) subExprs() []substitutableExpr        { return nil }
@@ -126,10 +142,13 @@ type Arrow struct {
 // MakeArrow is a utility function for writing correct Arrow expressions.
 //
 // Consider for example, matrix multiplication. It is written plainly as follows:
+//
 //	MatMul: (a, b) → (b, c) → (a, c)
+//
 // However, note that because arrows are right associative and they're a binary operator, it
 // actually is more correctly written like this:
-// 	MatMul: (a, b) → ((b, c) → (a, c))
+//
+//	MatMul: (a, b) → ((b, c) → (a, c))
 //
 // This makes writing plain Arrow{} expressions a bit fraught with errors (see example).
 // Thus, the MakeArrow function is created to help write more correct expressions.

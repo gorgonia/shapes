@@ -247,10 +247,10 @@ func Example_transpose() {
 	fmt.Printf("Bad first input causes error: %v", err)
 
 	// Output:
-	// Unconstrained Transpose: a → X[0 1 3 2] → T X[0 1 3 2] a
-	// Transpose: { a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) }
-	// Applying (1, 2, 3, 4) to { a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) }:
-	// 	{ a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) } @ (1, 2, 3, 4) ↠ X[0 1 3 2] → (1, 2, 4, 3)
+	// Unconstrained Transpose: a → X[0 1 3 2] → T⁽⁰ ¹ ³ ²⁾ a
+	// Transpose: { a → X[0 1 3 2] → T⁽⁰ ¹ ³ ²⁾ a | (D X[0 1 3 2] = D a) }
+	// Applying (1, 2, 3, 4) to { a → X[0 1 3 2] → T⁽⁰ ¹ ³ ²⁾ a | (D X[0 1 3 2] = D a) }:
+	// 	{ a → X[0 1 3 2] → T⁽⁰ ¹ ³ ²⁾ a | (D X[0 1 3 2] = D a) } @ (1, 2, 3, 4) ↠ X[0 1 3 2] → (1, 2, 4, 3)
 	// Applying X[0 1 3 2] to X[0 1 3 2] → (1, 2, 4, 3):
 	// 	X[0 1 3 2] → (1, 2, 4, 3) @ X[0 1 3 2] ↠ (1, 2, 4, 3)
 	// Bad Axes causes error: Failed to solve [{X[0 1 3 2] → (1, 2, 4, 3) = X[0 2 1 3] → a}] | a: Unification Fail. X[0 1 3 2] ~ X[0 2 1 3] cannot proceed
@@ -276,8 +276,8 @@ func Example_transpose_NoOp() {
 	fmt.Printf("\t%v @ %v ↠ %v", transpose, fst, retExpr)
 
 	// Output:
-	// Applying (1, 2, 3, 4) to a → T X[0 1 3 2] a
-	// 	a → T X[0 1 3 2] a @ (1, 2, 3, 4) ↠ (1, 2, 4, 3)
+	// Applying (1, 2, 3, 4) to a → T⁽⁰ ¹ ² ³⁾ a
+	// 	a → T⁽⁰ ¹ ² ³⁾ a @ (1, 2, 3, 4) ↠ (1, 2, 3, 4)
 
 }
 
@@ -616,9 +616,9 @@ func Example_colwiseSumMatrix() {
 	// Output:
 	// Basic: (r, c) → (1, c)
 	// Numpy Compatible: (r, c) → (c)
-	// General: a → /[1]a
-	// Applying (2, 3) to a → /[1]a:
-	// 	a → /[1]a @ (2, 3) → (2)
+	// General: a → /¹a
+	// Applying (2, 3) to a → /¹a:
+	// 	a → /¹a @ (2, 3) → (2)
 }
 
 func Example_sum_allAxes() {
@@ -642,11 +642,11 @@ func Example_sum_allAxes() {
 	fmt.Printf("\t%v @ %v → %v", sum1, fst, retExpr1)
 
 	// Output:
-	// Sum: a → /[0]/[1]a
-	// Applying (2, 3) to a → /[0]/[1]a
-	// 	a → /[0]/[1]a @ (2, 3) → ()
-	// Applying (2, 3) to a → /[:]a
-	//	a → /[:]a @ (2, 3) → ()
+	// Sum: a → /⁰/¹a
+	// Applying (2, 3) to a → /⁰/¹a
+	// 	a → /⁰/¹a @ (2, 3) → ()
+	// Applying (2, 3) to a → /⁼a
+	//	a → /⁼a @ (2, 3) → ()
 
 }
 
@@ -678,4 +678,17 @@ func Example_keepDims() {
 	// Output:
 	// KeepDims1: { (a → b) → a → c | (D a = D c) }
 
+}
+
+func Example_broadcast() {
+	add := Arrow{Var('a'), Arrow{Var('b'), BroadcastOf{Var('a'), Var('b')}}}
+	expr := Compound{add, SubjectTo{
+		Bc,
+		UnaryOp{Const, Var('a')},
+		UnaryOp{Const, Var('b')},
+	}}
+
+	fmt.Printf("Add: %v\n", expr)
+	// Output:
+	// Add: { a → b → (a||b) | (K a ⚟ K b) }
 }
