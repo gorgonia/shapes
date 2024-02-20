@@ -11,12 +11,12 @@ const (
 
 // NoOpError is a useful for operations that have no op.
 type NoOpError interface {
-	NoOp() bool
+	NoOp()
 }
 
 type noopError struct{}
 
-func (e noopError) NoOp() bool    { return true }
+func (e noopError) NoOp()         {}
 func (e noopError) Error() string { return "NoOp" }
 
 const (

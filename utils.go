@@ -459,6 +459,12 @@ func AreBroadcastable(a, b Shape) (err error) {
 // This function does not check that the shapes are mutually broadcastable.
 // Use `AreBroadcastable` for that functionality.
 func CalcBroadcastShape(a, b Shape) Shape {
+	if a.IsScalarEquiv() {
+		return b
+	}
+	if b.IsScalarEquiv() {
+		return a
+	}
 	retVal := make(Shape, 0, a.Dims())
 	for i, u := range a {
 		v := b[i]
