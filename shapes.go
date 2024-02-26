@@ -357,3 +357,5 @@ func (s Shape) subExprs() (retVal []substitutableExpr) {
 	}
 	return retVal
 }
+
+func (s Shape) depth() int { return 1 }

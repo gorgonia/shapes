@@ -714,3 +714,94 @@ func Example_broadcast() {
 	// Applying (2, 1, 4) to { b → ((2, 3, 4)||b) | (K (2, 3, 4) ⚟ K b) }
 	//	{ b → ((2, 3, 4)||b) | (K (2, 3, 4) ⚟ K b) } @ (2, 1, 4) → (2, 3, 4)
 }
+
+func Example_im2col() {
+	type im2col struct {
+		h, w                 int // kernel height and  width
+		padH, padW           int
+		strideH, strideW     int
+		dilationH, dilationW int
+	}
+	op := im2col{
+		3, 3,
+		1, 1,
+		1, 1,
+		1, 1,
+	}
+
+	b := Var('b')
+	c := Var('c')
+	h := Var('h')
+	w := Var('w')
+	in := Abstract{b, c, h, w}
+
+	// h2 = (h+2*op.padH-(op.dilationH*(op.h-1)+1))/op.strideH + 1
+	h2 := BinOp{
+		Op: Add,
+		A: E2{BinOp{
+			Op: Div,
+			A: E2{BinOp{
+				Op: Sub,
+				A: E2{BinOp{
+					Op: Add,
+					A:  h,
+					B: E2{BinOp{
+						Op: Mul,
+						A:  Size(2),
+						B:  Size(op.padH),
+					}},
+				}},
+				B: Size(op.dilationH*(op.h-1) + 1),
+			}},
+			B: Size(op.strideH),
+		}},
+		B: Size(1),
+	}
+
+	//  w2 = (w+2*op.padW-(op.dilationW*(op.w-1)+1))/op.strideW + 1
+	w2 := BinOp{
+		Op: Add,
+		A: E2{BinOp{
+			Op: Div,
+			A: E2{BinOp{
+				Op: Sub,
+				A: E2{BinOp{
+					Op: Add,
+					A:  w,
+					B: E2{BinOp{
+						Op: Mul,
+						A:  Size(2),
+						B:  Size(op.padW),
+					}},
+				}},
+				B: Size(op.dilationW*(op.w-1) + 1),
+			}},
+			B: Size(op.strideW),
+		}},
+		B: Size(1),
+	}
+
+	c2 := BinOp{
+		Op: Mul,
+		A:  c,
+		B:  Size(op.w * op.h),
+	}
+
+	out := Abstract{b, h2, w2, c2}
+
+	im2colExpr := MakeArrow(in, out)
+	s := Shape{100, 3, 90, 120}
+	s2, err := InferApp(im2colExpr, s)
+	if err != nil {
+		fmt.Printf("Unable to infer %v @ %v", im2colExpr, s)
+	}
+
+	fmt.Printf("im2col: %v\n", im2colExpr)
+	fmt.Printf("Applying %v to %v:\n", s, im2colExpr)
+	fmt.Printf("\t%v @ %v → %v", im2colExpr, s, s2)
+
+	// Output:
+	// im2col: (b, c, h, w) → (b, (((h + 2 × 1) - 3) ÷ 1) + 1, (((w + 2 × 1) - 3) ÷ 1) + 1, c × 9)
+	// Applying (100, 3, 90, 120) to (b, c, h, w) → (b, (((h + 2 × 1) - 3) ÷ 1) + 1, (((w + 2 × 1) - 3) ÷ 1) + 1, c × 9):
+	//	(b, c, h, w) → (b, (((h + 2 × 1) - 3) ÷ 1) + 1, (((w + 2 × 1) - 3) ÷ 1) + 1, c × 9) @ (100, 3, 90, 120) → (100, 90, 120, 27)
+}

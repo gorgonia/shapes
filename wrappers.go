@@ -9,7 +9,7 @@ import (
 // wrappers are wrappers for specific types to convert them from one type to another
 
 var _ sizeOp = sizelikeSliceOf{}
-var _ sizeOp = exprBinOp{}
+var _ sizeOp = E2{}
 var _ fmt.Formatter = sizelikeSliceOf{}
 
 type sizelikeSliceOf struct{ SliceOf }
@@ -46,11 +46,12 @@ func (s sizelikeSliceOf) resolveSize() (retVal Size, err error) {
 	panic("Unreachable")
 }
 
-type exprBinOp struct{ BinOp }
+type E2 struct{ BinOp }
 
-func (e exprBinOp) isExpr() {}
+func (e E2) isExpr()    {}
+func (e E2) depth() int { return max(e.A.depth(), e.B.depth()) + 1 }
 
-func (e exprBinOp) apply(ss substitutions) substitutable {
+func (e E2) apply(ss substitutions) substitutable {
 	bo := e.BinOp.apply(ss).(BinOp)
-	return exprBinOp{bo}
+	return E2{bo}
 }

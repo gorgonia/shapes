@@ -78,6 +78,8 @@ func (a Abstract) Clone() Abstract {
 
 func (a Abstract) isExpr() {}
 
+func (a Abstract) depth() int { return 1 }
+
 // Dims returns the number of dimensions in the shape
 func (a Abstract) Dims() int { return len(a) }
 
@@ -132,7 +134,7 @@ func (a Abstract) S(slices ...Slice) (newShape Shapelike, err error) {
 		case Var:
 			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), s}}
 		case BinOp:
-			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), exprBinOp{s}}}
+			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), E2{s}}}
 		case UnaryOp:
 			retVal[d] = sizelikeSliceOf{SliceOf{toRange(sl), s}}
 		default:

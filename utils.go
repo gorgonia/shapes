@@ -17,6 +17,13 @@ func (t exprtup) freevars() varset {
 	return unique(retVal)
 }
 
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func prodInts(a []int) int {
 	retVal := 1
 	if len(a) == 0 {

@@ -105,6 +105,7 @@ type BinOp struct {
 	B  Expr
 }
 
+func (op BinOp) isExpr()       {}
 func (op BinOp) isSizelike()   {}
 func (op BinOp) isValid() bool { return op.Op >= Add && op.Op <= Or }
 func (op BinOp) resolveSize() (Size, error) {
@@ -320,7 +321,25 @@ func (op BinOp) subExprs() []substitutableExpr {
 }
 
 // Format formats the BinOp into a nice string.
-func (op BinOp) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v %v %v", op.A, op.Op, op.B) }
+func (op BinOp) Format(s fmt.State, r rune) {
+	var format string
+	switch r {
+	case 'P':
+		if op.A.depth() >= 3 || op.B.depth() >= 3 {
+			format = "(%P %v %P)"
+		} else {
+			format = "(%v %v %v)"
+		}
+	default:
+		if op.A.depth() >= 3 || op.B.depth() >= 3 {
+			format = "%P %v %P"
+		} else {
+			format = "%v %v %v"
+		}
+
+	}
+	fmt.Fprintf(s, format, op.A, op.Op, op.B)
+}
 
 // UnaryOp represetns a unary operation on a shape expression.
 // Unlike BinaryOp, UnaryOp is an expression.
@@ -329,6 +348,7 @@ type UnaryOp struct {
 	A  Expr
 }
 
+func (op UnaryOp) depth() int    { return op.A.depth() + 1 }
 func (op UnaryOp) isSizelike()   {}
 func (op UnaryOp) isValid() bool { return op.Op < Add }
 func (op UnaryOp) resolveSize() (Size, error) {

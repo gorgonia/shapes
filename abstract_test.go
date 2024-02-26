@@ -53,7 +53,7 @@ var absSliceTests = []struct {
 		[]Slice{S(1, 5, 2), S(1, 5), S(1, 5)},
 		Abstract{
 			sizelikeSliceOf{SliceOf{*S(1, 5, 2), Var('a')}},
-			sizelikeSliceOf{SliceOf{*S(1, 5), exprBinOp{BinOp{Add, Var('a'), Var('b')}}}},
+			sizelikeSliceOf{SliceOf{*S(1, 5), E2{BinOp{Add, Var('a'), Var('b')}}}},
 			sizelikeSliceOf{SliceOf{*S(1, 5), UnaryOp{Dims, Var('b')}}},
 		},
 		false,

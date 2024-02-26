@@ -31,6 +31,7 @@ func (i IndexOf) freevars() varset { return i.A.freevars() }
 func (i IndexOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{i.I, i.A.(substitutableExpr)}
 }
+func (i IndexOf) depth() int { return i.A.depth() + 1 }
 
 func (i IndexOf) isValid() bool { return true }
 func (i IndexOf) resolveSize() (Size, error) {
@@ -77,6 +78,7 @@ func (t TransposeOf) freevars() varset { return t.A.freevars() }
 func (t TransposeOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{t.Axes, t.A.(substitutableExpr)}
 }
+func (t TransposeOf) depth() int { return t.A.depth() + 1 }
 func (t TransposeOf) resolve() (Expr, error) {
 	switch at := t.A.(type) {
 	case Shapelike:
@@ -121,6 +123,7 @@ func (s SliceOf) freevars() varset { return s.A.freevars() }
 func (s SliceOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{s.Slice, s.A.(substitutableExpr)}
 }
+func (s SliceOf) depth() int { return s.A.depth() + 1 }
 
 func (s SliceOf) resolve() (Expr, error) {
 	switch at := s.A.(type) {
@@ -183,6 +186,7 @@ func (c ConcatOf) freevars() varset { return (exprtup{c.A, c.B}).freevars() }
 func (c ConcatOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{c.Along, c.A.(substitutableExpr), c.B.(substitutableExpr)}
 }
+func (c ConcatOf) depth() int { return max(c.A.depth(), c.B.depth()) + 1 }
 
 type RepeatOf struct {
 	Along   Axis
@@ -205,6 +209,7 @@ func (r RepeatOf) freevars() varset { return r.A.freevars() }
 func (r RepeatOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{r.Along, r.A.(substitutableExpr)}
 }
+func (r RepeatOf) depth() int { return r.A.depth() + 1 }
 
 func (r RepeatOf) resolve() (Expr, error) {
 	switch at := r.A.(type) {
@@ -236,6 +241,7 @@ func (b BroadcastOf) freevars() varset { return append(b.A.freevars(), b.B.freev
 func (b BroadcastOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{b.A.(substitutableExpr), b.B.(substitutableExpr)}
 }
+func (b BroadcastOf) depth() int { return max(b.A.depth(), b.B.depth()) + 1 }
 
 func (b BroadcastOf) resolve() (Expr, error) {
 	A, aok := b.A.(Shape)
@@ -277,6 +283,7 @@ func (r ReductOf) freevars() varset { return r.A.freevars() }
 func (r ReductOf) subExprs() []substitutableExpr {
 	return []substitutableExpr{r.A.(substitutableExpr)}
 }
+func (r ReductOf) depth() int { return r.A.depth() + 1 }
 
 func (r ReductOf) resolve() (Expr, error) {
 	A := r.A

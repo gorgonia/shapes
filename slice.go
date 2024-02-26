@@ -22,8 +22,8 @@ type Range struct {
 	start, end, step int
 }
 
-func (s Range) isExpr() {}
-
+func (s Range) isExpr()                              {}
+func (s Range) depth() int                           { return 1 }
 func (s Range) apply(ss substitutions) substitutable { return s }
 func (s Range) freevars() varset                     { return nil }
 

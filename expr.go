@@ -21,6 +21,7 @@ import (
 //	: | Ax | []Ax
 type Expr interface {
 	isExpr()
+	depth() int // depth of the expression at at that point
 
 	substitutable
 }
@@ -48,6 +49,7 @@ func (v Var) apply(ss substitutions) substitutable {
 }
 func (v Var) freevars() varset              { return varset{v} }
 func (v Var) subExprs() []substitutableExpr { return nil }
+func (v Var) depth() int                    { return 0 }
 
 // Axis represents an axis in doing shape stuff.
 type Axis int
@@ -60,6 +62,7 @@ func (a Axis) isExpr()                              {}
 func (a Axis) apply(ss substitutions) substitutable { return a }
 func (a Axis) freevars() varset                     { return nil }
 func (a Axis) subExprs() []substitutableExpr        { return nil }
+func (a Axis) depth() int                           { return 0 }
 func (a Axis) Format(s fmt.State, c rune) {
 	if c == 'x' {
 		if a == AllAxes {
@@ -102,6 +105,7 @@ func (a Axes) Format(s fmt.State, r rune) {
 func (a Axes) apply(ss substitutions) substitutable { return a }
 func (a Axes) freevars() varset                     { return nil }
 func (a Axes) subExprs() []substitutableExpr        { return nil }
+func (a Axes) depth() int                           { return 1 } // Axes is a single term
 func (a Axes) Dims() int                            { return len(a) }
 func (a Axes) AsInts() []int                        { return axesToInts(a) }
 func (a Axes) Eq(other Axes) bool {
@@ -116,6 +120,8 @@ func (s Size) isSizelike()                          {}
 func (s Size) apply(ss substitutions) substitutable { return s }
 func (s Size) freevars() varset                     { return nil }
 func (s Size) subExprs() []substitutableExpr        { return nil }
+func (s Size) depth() int                           { return 1 }
+func (s Size) Format(f fmt.State, r rune)           { fmt.Fprintf(f, "%d", int(s)) }
 
 // Size also implements Operation (i.e. it's a Const)
 
@@ -130,6 +136,7 @@ func (s Sizes) Format(f fmt.State, r rune)           { fmt.Fprintf(f, "Sz%v", si
 func (s Sizes) apply(ss substitutions) substitutable { return s }
 func (s Sizes) freevars() varset                     { return nil }
 func (s Sizes) subExprs() []substitutableExpr        { return nil }
+func (s Sizes) depth() int                           { return 1 }
 func (s Sizes) AsInts() []int                        { return sizesToInts(s) }
 
 // complex expressions
@@ -166,6 +173,8 @@ func MakeArrow(exprs ...Expr) Arrow {
 }
 
 func (a Arrow) isExpr() {}
+
+func (a Arrow) depth() int { return max(a.A.depth(), a.B.depth()) + 1 }
 
 func (a Arrow) Format(s fmt.State, r rune) {
 	if _, ok := a.A.(Arrow); ok {
